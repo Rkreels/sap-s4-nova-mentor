@@ -6,6 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Finance from "./pages/Finance";
+import Manufacturing from "./pages/Manufacturing";
+import Procurement from "./pages/Procurement";
+import ProjectManagement from "./pages/ProjectManagement";
+import Sales from "./pages/Sales";
+import TrialCenter from "./pages/TrialCenter";
 import NotFound from "./pages/NotFound";
 import SAPLayout from "./components/SAPLayout";
 
@@ -21,12 +26,11 @@ const App = () => (
           <Route path="/" element={<SAPLayout />}>
             <Route index element={<Index />} />
             <Route path="finance" element={<Finance />} />
-            <Route path="manufacturing" element={<Index />} />
-            <Route path="procurement" element={<Index />} />
-            <Route path="project-management" element={<Index />} />
-            <Route path="sales" element={<Index />} />
-            <Route path="other" element={<Index />} />
-            <Route path="trial-center" element={<Index />} />
+            <Route path="manufacturing" element={<Manufacturing />} />
+            <Route path="procurement" element={<Procurement />} />
+            <Route path="project-management" element={<ProjectManagement />} />
+            <Route path="sales" element={<Sales />} />
+            <Route path="trial-center" element={<TrialCenter />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
