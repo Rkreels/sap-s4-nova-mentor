@@ -6,6 +6,7 @@ export const useVoiceAssistant = () => {
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [preferredVoice, setPreferredVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [speechQueue, setSpeechQueue] = useState<string[]>([]);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -55,41 +56,48 @@ export const useVoiceAssistant = () => {
     };
   }, []);
 
-  // Speak text function with enhanced educational content
+  // Process speech queue
+  useEffect(() => {
+    if (speechQueue.length > 0 && !isSpeaking && speechSynthesis) {
+      const text = speechQueue[0];
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setSpeechQueue(current => current.slice(1));
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setSpeechQueue(current => current.slice(1));
+      };
+      
+      speechSynthesis.speak(utterance);
+    }
+  }, [speechQueue, isSpeaking, speechSynthesis, preferredVoice]);
+
+  // Speak text function
   const speak = useCallback((text: string) => {
-    if (!speechSynthesis) {
-      console.warn("Speech synthesis not available");
-      return;
-    }
+    if (!text.trim()) return;
     
-    // Stop any current speech
-    speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-    
-    utterance.rate = 0.95; // Slightly slower for better comprehension
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = (event) => {
-      console.error("Speech synthesis error:", event);
-      setIsSpeaking(false);
-    };
-    
-    speechSynthesis.speak(utterance);
-  }, [speechSynthesis, preferredVoice]);
+    // Add to queue
+    setSpeechQueue(current => [...current, text]);
+  }, []);
 
   // Stop speaking
   const stop = useCallback(() => {
     if (speechSynthesis) {
       speechSynthesis.cancel();
       setIsSpeaking(false);
+      setSpeechQueue([]);
     }
   }, [speechSynthesis]);
 
@@ -149,12 +157,20 @@ export const useVoiceAssistant = () => {
     return content;
   }, []);
 
+  // Speak educational content
+  const teachAbout = useCallback((topic: string, detail?: string) => {
+    const content = generateEducationalContent(topic, detail);
+    speak(content);
+  }, [generateEducationalContent, speak]);
+
   return {
     speak,
     stop,
     isSpeaking,
     voices,
     preferredVoice,
-    generateEducationalContent
+    generateEducationalContent,
+    teachAbout,
+    isActive: speechQueue.length > 0 || isSpeaking
   };
 };

@@ -3,12 +3,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
-interface SAPNavigationBarProps {
-  isVoiceAssistantEnabled: boolean;
-}
-
-const SAPNavigationBar: React.FC<SAPNavigationBarProps> = ({ isVoiceAssistantEnabled }) => {
+const SAPNavigationBar: React.FC = () => {
+  const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   const location = useLocation();
   
@@ -20,23 +18,22 @@ const SAPNavigationBar: React.FC<SAPNavigationBarProps> = ({ isVoiceAssistantEna
     { name: 'Procurement', path: '/procurement' },
     { name: 'Project Management', path: '/project-management' },
     { name: 'Sales', path: '/sales' },
-    { name: 'Other', path: '/other' },
   ];
 
   const handleNavItemHover = (item: string) => {
-    if (isVoiceAssistantEnabled) {
+    if (isEnabled) {
       speak(`This is the ${item} navigation item. Click to access ${item} related features and functions.`);
     }
   };
 
   const handleNavItemClick = (item: string) => {
-    if (isVoiceAssistantEnabled) {
+    if (isEnabled) {
       speak(`You are now navigating to the ${item} area. This module contains all functionality related to ${item}.`);
     }
   };
 
   const handleMenuButtonHover = () => {
-    if (isVoiceAssistantEnabled) {
+    if (isEnabled) {
       speak("This is the menu button. Click it to expand or collapse the sidebar navigation.");
     }
   };
@@ -48,7 +45,7 @@ const SAPNavigationBar: React.FC<SAPNavigationBarProps> = ({ isVoiceAssistantEna
           className="flex items-center justify-center h-12 w-12 hover:bg-gray-100" 
           onMouseEnter={handleMenuButtonHover}
           onClick={() => {
-            if (isVoiceAssistantEnabled) {
+            if (isEnabled) {
               speak("This menu button toggles the sidebar navigation, which provides access to additional features and functions.");
             }
           }}

@@ -4,9 +4,16 @@ import { Outlet } from 'react-router-dom';
 import SAPHeader from './SAPHeader';
 import SAPNavigationBar from './SAPNavigationBar';
 import VoiceAssistant from './VoiceAssistant';
+import { VoiceAssistantProvider } from '../context/VoiceAssistantContext';
 
 const SAPLayout: React.FC = () => {
   const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  
+  // Initialize the voice assistant state from localStorage on component mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('voiceAssistantEnabled') === 'true';
+    setIsVoiceAssistantEnabled(savedState);
+  }, []);
   
   // Store the voice assistant state in localStorage to ensure consistency
   useEffect(() => {
@@ -14,26 +21,22 @@ const SAPLayout: React.FC = () => {
   }, [isVoiceAssistantEnabled]);
   
   const toggleVoiceAssistant = () => {
-    setIsVoiceAssistantEnabled(!isVoiceAssistantEnabled);
+    setIsVoiceAssistantEnabled(prevState => !prevState);
   };
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <SAPHeader 
-        toggleVoiceAssistant={toggleVoiceAssistant} 
-        isVoiceAssistantEnabled={isVoiceAssistantEnabled} 
-      />
-      <SAPNavigationBar isVoiceAssistantEnabled={isVoiceAssistantEnabled} />
-      
-      <main className="flex-1 p-4">
-        <Outlet />
-      </main>
-      
-      <VoiceAssistant 
-        isEnabled={isVoiceAssistantEnabled} 
-        toggleEnabled={toggleVoiceAssistant} 
-      />
-    </div>
+    <VoiceAssistantProvider value={{ isEnabled: isVoiceAssistantEnabled, toggle: toggleVoiceAssistant }}>
+      <div className="flex flex-col min-h-screen">
+        <SAPHeader />
+        <SAPNavigationBar />
+        
+        <main className="flex-1 p-4">
+          <Outlet />
+        </main>
+        
+        <VoiceAssistant />
+      </div>
+    </VoiceAssistantProvider>
   );
 };
 
