@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import SAPHeader from './SAPHeader';
 import SAPNavigationBar from './SAPNavigationBar';
@@ -7,6 +7,11 @@ import VoiceAssistant from './VoiceAssistant';
 
 const SAPLayout: React.FC = () => {
   const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  
+  // Store the voice assistant state in localStorage to ensure consistency
+  useEffect(() => {
+    localStorage.setItem('voiceAssistantEnabled', isVoiceAssistantEnabled.toString());
+  }, [isVoiceAssistantEnabled]);
   
   const toggleVoiceAssistant = () => {
     setIsVoiceAssistantEnabled(!isVoiceAssistantEnabled);

@@ -9,36 +9,42 @@ export const useVoiceAssistant = () => {
 
   // Initialize speech synthesis
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    // Safely check if speechSynthesis is available in the window object
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       setSpeechSynthesis(window.speechSynthesis);
       
       // Initial voices load
       const loadVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices();
-        setVoices(availableVoices);
-        
-        // Try to find a female English voice
-        const femaleVoice = availableVoices.find(
-          voice => voice.name.includes('Female') || 
-                  voice.name.includes('female') || 
-                  voice.name.includes('Samantha') ||
-                  (voice.name.includes('Google') && voice.lang.includes('en-US'))
-        );
-        
-        // Fallback to any English voice
-        const englishVoice = availableVoices.find(
-          voice => voice.lang.includes('en')
-        );
-        
-        setPreferredVoice(femaleVoice || englishVoice || availableVoices[0]);
+        if (availableVoices.length > 0) {
+          setVoices(availableVoices);
+          
+          // Try to find a female English voice
+          const femaleVoice = availableVoices.find(
+            voice => voice.name.includes('Female') || 
+                    voice.name.includes('female') || 
+                    voice.name.includes('Samantha') ||
+                    (voice.name.includes('Google') && voice.lang.includes('en-US'))
+          );
+          
+          // Fallback to any English voice
+          const englishVoice = availableVoices.find(
+            voice => voice.lang.includes('en')
+          );
+          
+          setPreferredVoice(femaleVoice || englishVoice || availableVoices[0]);
+        }
       };
       
-      // Chrome loads voices asynchronously
-      if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = loadVoices;
-      }
-      
+      // Load voices initially
       loadVoices();
+      
+      // Chrome loads voices asynchronously - only attach the event if it exists
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    } else {
+      console.warn("Speech synthesis not available in this browser");
     }
   }, []);
 
@@ -53,7 +59,10 @@ export const useVoiceAssistant = () => {
 
   // Speak text function
   const speak = useCallback((text: string) => {
-    if (!speechSynthesis) return;
+    if (!speechSynthesis) {
+      console.warn("Speech synthesis not available");
+      return;
+    }
     
     // Stop any current speech
     speechSynthesis.cancel();
