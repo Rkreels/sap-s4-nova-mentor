@@ -1,19 +1,29 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SAPSection from '../components/SAPSection';
 import SAPTile from '../components/SAPTile';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { Calendar, ChevronDown, Clock, ListChecks } from 'lucide-react';
 
 const Index: React.FC = () => {
-  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = React.useState(false);
+  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
   const { speak } = useVoiceAssistant();
   
-  React.useEffect(() => {
-    if (isVoiceAssistantEnabled) {
-      speak("Welcome to the SAP S/4HANA dashboard. This is your main workspace where you can access all modules and functions of the system. Navigate through the tabs above to explore different areas like Finance, Manufacturing, Procurement, and more.");
-    }
-  }, [speak, isVoiceAssistantEnabled]);
+  useEffect(() => {
+    const checkVoiceAssistant = () => {
+      const enabled = localStorage.getItem('voiceAssistantEnabled') === 'true';
+      setIsVoiceAssistantEnabled(enabled);
+      
+      if (enabled) {
+        speak(`Welcome to the SAP S/4HANA dashboard. This is your main workspace where you can access all modules and functions 
+        of the system. The layout is organized into sections like News, Pages, Apps, Insights, and To-Dos. 
+        For example, in the Pages section, you'll find quick access to modules like Finance, Manufacturing, 
+        Procurement, and Sales. The Apps section shows recommended applications based on your usage patterns 
+        and role. You can navigate through different modules using the tabs in the navigation bar above.`);
+      }
+    };
+    
+    checkVoiceAssistant();
+  }, [speak]);
 
   const toggleVoiceAssistant = () => {
     setIsVoiceAssistantEnabled(!isVoiceAssistantEnabled);

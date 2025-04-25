@@ -13,6 +13,7 @@ interface SAPTileProps {
   onClick?: () => void;
   description?: string;
   isVoiceAssistantEnabled: boolean;
+  examples?: string;
 }
 
 const SAPTile: React.FC<SAPTileProps> = ({
@@ -25,7 +26,8 @@ const SAPTile: React.FC<SAPTileProps> = ({
   color = "bg-white",
   onClick,
   description = "",
-  isVoiceAssistantEnabled
+  isVoiceAssistantEnabled,
+  examples = ""
 }) => {
   const { speak } = useVoiceAssistant();
   
@@ -39,7 +41,8 @@ const SAPTile: React.FC<SAPTileProps> = ({
     if (onClick) onClick();
     
     if (isVoiceAssistantEnabled) {
-      speak(`You clicked on ${title}. ${description ? `This tile is used for ${description}.` : ""}`);
+      const exampleText = examples ? `For example: ${examples}` : "";
+      speak(`You clicked on ${title}. ${description ? `This tile is used for ${description}.` : ""} ${exampleText}`);
     }
   };
 

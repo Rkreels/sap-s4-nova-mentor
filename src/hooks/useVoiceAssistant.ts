@@ -40,24 +40,22 @@ export const useVoiceAssistant = () => {
       loadVoices();
       
       // Chrome loads voices asynchronously - only attach the event if it exists
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
         window.speechSynthesis.onvoiceschanged = loadVoices;
       }
     } else {
       console.warn("Speech synthesis not available in this browser");
     }
-  }, []);
 
-  // Stop any current speech before unloading
-  useEffect(() => {
+    // Cleanup function
     return () => {
       if (speechSynthesis) {
         speechSynthesis.cancel();
       }
     };
-  }, [speechSynthesis]);
+  }, []);
 
-  // Speak text function
+  // Speak text function with enhanced educational content
   const speak = useCallback((text: string) => {
     if (!speechSynthesis) {
       console.warn("Speech synthesis not available");
@@ -73,13 +71,16 @@ export const useVoiceAssistant = () => {
       utterance.voice = preferredVoice;
     }
     
-    utterance.rate = 1;
+    utterance.rate = 0.95; // Slightly slower for better comprehension
     utterance.pitch = 1;
     utterance.volume = 1;
     
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onerror = (event) => {
+      console.error("Speech synthesis error:", event);
+      setIsSpeaking(false);
+    };
     
     speechSynthesis.speak(utterance);
   }, [speechSynthesis, preferredVoice]);
@@ -92,11 +93,68 @@ export const useVoiceAssistant = () => {
     }
   }, [speechSynthesis]);
 
+  // Generate detailed educational content
+  const generateEducationalContent = useCallback((topic: string, detail?: string) => {
+    const educationalContent = {
+      "finance": `Finance module in SAP S/4HANA is designed for comprehensive financial management. 
+      It includes functionalities for general ledger accounting, accounts receivable, accounts payable, 
+      asset accounting, and financial reporting. For example, you can use the General Ledger section to 
+      record and track all financial transactions, while the Accounts Receivable section helps manage 
+      customer payments and outstanding invoices. The predictive accounting features use AI to forecast 
+      financial outcomes based on historical data and current trends.`,
+      
+      "manufacturing": `The Manufacturing module in SAP S/4HANA supports all aspects of production planning 
+      and execution. It includes tools for production scheduling, material requirements planning, shop floor 
+      control, and quality management. For instance, you can use the Production Orders tile to create and 
+      schedule manufacturing orders, and the Material Requirements tile to ensure all necessary components 
+      are available for production. This module integrates with Inventory Management to provide a complete 
+      view of your supply chain.`,
+      
+      "procurement": `The Procurement module handles all purchasing activities, from vendor management to 
+      purchase order processing. It streamlines the procurement process by providing tools for vendor evaluation, 
+      contract management, and purchase requisition approval. For example, the Create Purchase Order tile 
+      allows you to generate new orders for goods or services, while the Supplier Directory provides access 
+      to your approved vendor list with performance ratings and contract terms.`,
+      
+      "sales": `The Sales module manages all customer-facing transactions and relationships. It includes 
+      functionality for sales order processing, quotation management, pricing, and customer relationship 
+      management. The Create Sales Order tile, for example, allows you to input new customer orders with 
+      appropriate products, quantities, and pricing. The Customer Analytics section provides insights into 
+      buying patterns and preferences to help drive sales strategies.`,
+      
+      "project": `Project Management in SAP S/4HANA helps plan, execute, and monitor projects of all sizes. 
+      It includes tools for project planning, resource allocation, time tracking, and project accounting. 
+      For instance, you can use the Active Projects tile to monitor ongoing projects and their status, 
+      while the Resource Planning tile helps allocate personnel and equipment to specific project tasks.`,
+      
+      "trial": `The Trial Center provides a safe environment to explore and learn SAP S/4HANA features. 
+      It includes educational resources like tutorials and documentation, as well as a sandbox environment 
+      for practicing without affecting real data. The Tutorials tile provides step-by-step guides for learning 
+      specific functionalities, while the Sandbox Environment allows you to test processes in an isolated system.`,
+      
+      "default": `SAP S/4HANA is an integrated enterprise resource planning (ERP) system designed to help 
+      organizations run their business processes efficiently. It combines transactional processing with 
+      real-time analytics, providing insights for better decision-making. The system is organized into modules 
+      like Finance, Manufacturing, Procurement, Sales, and Project Management, each addressing specific 
+      business functions while maintaining data integration across the organization.`
+    };
+    
+    const content = educationalContent[topic.toLowerCase() as keyof typeof educationalContent] || 
+                    educationalContent.default;
+    
+    if (detail) {
+      return `${detail} ${content}`;
+    }
+    
+    return content;
+  }, []);
+
   return {
     speak,
     stop,
     isSpeaking,
     voices,
     preferredVoice,
+    generateEducationalContent
   };
 };
