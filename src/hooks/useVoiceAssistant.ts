@@ -74,6 +74,7 @@ export const useVoiceAssistant = () => {
       utterance.onstart = () => {
         setIsSpeaking(true);
         setIsActive(true);
+        console.log("Voice assistant started speaking");
       };
       
       utterance.onend = () => {
@@ -82,9 +83,11 @@ export const useVoiceAssistant = () => {
         if (speechQueue.length <= 1) {
           setIsActive(false);
         }
+        console.log("Voice assistant finished speaking");
       };
       
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
         setIsSpeaking(false);
         setSpeechQueue(current => current.slice(1));
         if (speechQueue.length <= 1) {
@@ -92,33 +95,53 @@ export const useVoiceAssistant = () => {
         }
       };
       
-      speechSynthesis.speak(utterance);
+      try {
+        speechSynthesis.speak(utterance);
+      } catch (error) {
+        console.error("Error in speech synthesis:", error);
+      }
     }
   }, [speechQueue, isSpeaking, speechSynthesis, preferredVoice]);
 
   // Speak text function - Modified to stop current speech before starting new
   const speak = useCallback((text: string) => {
-    if (!text.trim()) return;
+    if (!text || !text.trim()) {
+      console.warn("Attempted to speak empty text");
+      return;
+    }
+    
+    console.log("Voice assistant trying to speak:", text.substring(0, 30) + "...");
     
     // Stop current speech before adding new text
     if (speechSynthesis) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-      // Clear the queue completely when a new speech request comes in
-      setSpeechQueue([text]);
+      try {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+        // Clear the queue completely when a new speech request comes in
+        setSpeechQueue([text]);
+        console.log("Speech queue updated with new text");
+      } catch (error) {
+        console.error("Error when trying to speak:", error);
+      }
     } else {
       // Add to queue if speech synthesis isn't available yet
       setSpeechQueue(current => [...current, text]);
+      console.log("Added text to speech queue (speech synthesis not available yet)");
     }
   }, [speechSynthesis]);
 
   // Stop speaking
   const stop = useCallback(() => {
     if (speechSynthesis) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-      setSpeechQueue([]);
-      setIsActive(false);
+      try {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setSpeechQueue([]);
+        setIsActive(false);
+        console.log("Voice assistant stopped");
+      } catch (error) {
+        console.error("Error stopping speech:", error);
+      }
     }
   }, [speechSynthesis]);
 
