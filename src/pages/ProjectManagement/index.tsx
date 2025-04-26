@@ -104,7 +104,7 @@ const ProjectManagement: React.FC = () => {
         </div>
       </div>
 
-      <SAPSection title="Latest Project Activities">
+      <SAPSection title="Latest Project Activities" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full">
           <ProjectOverview />
         </div>

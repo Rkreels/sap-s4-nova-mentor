@@ -100,13 +100,13 @@ const Procurement: React.FC = () => {
         </div>
       </div>
 
-      <SAPSection title="Recent Purchase Orders">
+      <SAPSection title="Recent Purchase Orders" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full">
           <PurchaseOrders />
         </div>
       </SAPSection>
 
-      <SAPSection title="Top Suppliers">
+      <SAPSection title="Top Suppliers" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full">
           <SupplierManagement />
         </div>

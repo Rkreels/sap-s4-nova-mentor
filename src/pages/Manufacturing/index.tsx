@@ -32,7 +32,7 @@ const Manufacturing: React.FC = () => {
         manage orders, and track inventory levels.`}
       />
 
-      <SAPSection title="Production Overview">
+      <SAPSection title="Production Overview" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full mb-8">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Production Performance</h3>
@@ -65,13 +65,13 @@ const Manufacturing: React.FC = () => {
         </div>
       </SAPSection>
 
-      <SAPSection title="Production Orders">
+      <SAPSection title="Production Orders" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full">
           <ProductionOrders />
         </div>
       </SAPSection>
 
-      <SAPSection title="Inventory Management">
+      <SAPSection title="Inventory Management" isVoiceAssistantEnabled={isEnabled}>
         <div className="col-span-full">
           <InventoryManagement />
         </div>

@@ -7,6 +7,7 @@ import PageSection from './components/PageSection';
 import AppsSection from './components/AppsSection';
 import InsightSection from './components/InsightSection';
 import TodoSection from './components/TodoSection';
+import { Edit, Settings } from 'lucide-react';
 
 const Index: React.FC = () => {
   const { isEnabled } = useVoiceAssistantContext();
