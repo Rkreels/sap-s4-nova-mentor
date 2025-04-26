@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell, HelpCircle, Volume2, VolumeX, Clock, User, Settings, Info, FileText, LogOut } from 'lucide-react';
+import { Search, Bell, HelpCircle, Volume2, VolumeX, Clock, User, Settings, Info, FileText, LogOut, Menu } from 'lucide-react';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
+import { Star, Edit } from '../components/ui/icons';
 
 interface SAPHeaderProps {
   onMenuClick: () => void;
