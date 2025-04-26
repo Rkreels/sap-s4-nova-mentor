@@ -9,23 +9,28 @@ const VoiceAssistant: React.FC = () => {
   const { speak, isSpeaking, stop } = useVoiceAssistant();
   const [showTeachingMode, setShowTeachingMode] = useState(false);
   const [showAssistantPanel, setShowAssistantPanel] = useState(true);
+  const [lastMessage, setLastMessage] = useState<string>("");
 
   const handleToggle = () => {
+    // Stop any current speech before toggling
+    stop();
+    
     const newState = !isEnabled;
     toggle();
     
     if (newState) {
       speak("Voice assistant is now active. I'll guide you through the SAP S/4HANA interface. Hover over elements to learn about them. Click the info button for detailed teaching mode with examples.");
-    } else {
-      stop();
     }
   };
 
   const handleTeachingModeToggle = () => {
+    // Stop any current speech before toggling teaching mode
+    stop();
+    
     setShowTeachingMode(!showTeachingMode);
     
     if (!showTeachingMode && isEnabled) {
-      speak("Teaching mode activated. In this mode, I'll provide more detailed explanations and examples to help you understand the SAP S/4HANA system. For example, in the Finance module, the General Ledger section lets you record and view all financial transactions in real-time. You can use this to track expenses, revenue, and generate financial statements for reporting periods.");
+      speak("Teaching mode activated. In this mode, I'll provide more detailed explanations and examples to help you understand the SAP S/4HANA system. For example, in the Finance module, the General Ledger section lets you record and view all financial transactions in real-time.");
     }
   };
 
@@ -39,6 +44,13 @@ const VoiceAssistant: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isEnabled, showAssistantPanel]);
+
+  // Store the last message that was spoken
+  useEffect(() => {
+    if (isSpeaking) {
+      setLastMessage("Currently speaking...");
+    }
+  }, [isSpeaking]);
 
   if (!isEnabled) {
     return (
@@ -101,6 +113,18 @@ const VoiceAssistant: React.FC = () => {
               <p className="text-xs text-gray-600">
                 In the Sales module, the "Create Sales Order" function allows you to enter new customer orders. You'll need to select a customer, add products, set quantities and prices, and choose delivery terms.
               </p>
+            </div>
+          )}
+          
+          {isSpeaking && (
+            <div className="mt-3 p-2 bg-blue-50 rounded-md">
+              <p className="text-xs text-blue-600">Speaking...</p>
+              <button 
+                onClick={stop}
+                className="text-xs text-blue-700 underline mt-1"
+              >
+                Stop narration
+              </button>
             </div>
           )}
           

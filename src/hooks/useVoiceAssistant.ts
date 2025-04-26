@@ -96,19 +96,21 @@ export const useVoiceAssistant = () => {
     }
   }, [speechQueue, isSpeaking, speechSynthesis, preferredVoice]);
 
-  // Speak text function
+  // Speak text function - Modified to stop current speech before starting new
   const speak = useCallback((text: string) => {
     if (!text.trim()) return;
     
-    // Stop current speech before adding new text to queue
-    if (speechSynthesis && isSpeaking) {
+    // Stop current speech before adding new text
+    if (speechSynthesis) {
       speechSynthesis.cancel();
       setIsSpeaking(false);
+      // Clear the queue completely when a new speech request comes in
+      setSpeechQueue([text]);
+    } else {
+      // Add to queue if speech synthesis isn't available yet
+      setSpeechQueue(current => [...current, text]);
     }
-    
-    // Add to queue
-    setSpeechQueue(current => [...current, text]);
-  }, [isSpeaking, speechSynthesis]);
+  }, [speechSynthesis]);
 
   // Stop speaking
   const stop = useCallback(() => {

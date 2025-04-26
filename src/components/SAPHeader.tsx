@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Bell, HelpCircle, Volume2, VolumeX, Clock, User, Settings, Info, FileText, LogOut, Menu } from 'lucide-react';
@@ -13,6 +14,7 @@ const SAPHeader: React.FC<SAPHeaderProps> = ({ onMenuClick }) => {
   const { isEnabled, toggle } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAppsMenu, setShowAppsMenu] = useState(false);
   
   const handleLogoHover = () => {
     if (isEnabled) {
@@ -53,6 +55,12 @@ const SAPHeader: React.FC<SAPHeaderProps> = ({ onMenuClick }) => {
 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
+    if (showAppsMenu) setShowAppsMenu(false);
+  };
+
+  const toggleAppsMenu = () => {
+    setShowAppsMenu(!showAppsMenu);
+    if (showUserMenu) setShowUserMenu(false);
   };
 
   return (
@@ -60,11 +68,77 @@ const SAPHeader: React.FC<SAPHeaderProps> = ({ onMenuClick }) => {
       <div className="flex items-center justify-between px-4 h-16">
         <div className="flex items-center">
           <button 
-            className="mr-4 p-2 text-gray-600 hover:text-gray-800" 
-            onClick={onMenuClick}
+            className="mr-4 p-2 text-gray-600 hover:text-gray-800 relative" 
+            onClick={toggleAppsMenu}
           >
             <Menu size={20} />
+            <span className="text-xs ml-1">All My Apps</span>
           </button>
+          
+          {showAppsMenu && (
+            <div className="absolute top-16 left-0 w-80 bg-white border rounded-md shadow-lg z-50 mt-1">
+              <div className="p-3 border-b">
+                <h2 className="text-lg font-semibold">All My Apps</h2>
+              </div>
+              <div className="p-3">
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-2 flex justify-between">
+                    <span>Pinned Spaces (7)</span>
+                    <button className="text-xs text-blue-500">Unpin All</button>
+                  </h3>
+                  <ul className="space-y-1">
+                    <li className="group">
+                      <Link to="/" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Trial Center</span>
+                        <Star className="h-4 w-4 text-blue-500" fill="#3b82f6" />
+                      </Link>
+                    </li>
+                    <li className="group">
+                      <Link to="/finance" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Finance</span>
+                        <Star className="h-4 w-4 text-blue-500" fill="#3b82f6" />
+                      </Link>
+                    </li>
+                    <li className="group">
+                      <Link to="/manufacturing" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Manufacturing and Supply Chain</span>
+                        <Star className="h-4 w-4 text-blue-500" fill="#3b82f6" />
+                      </Link>
+                    </li>
+                    <li className="group">
+                      <Link to="/procurement" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Procurement</span>
+                        <Star className="h-4 w-4 text-blue-500" fill="#3b82f6" />
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-2">All Spaces</h3>
+                  <ul className="space-y-1">
+                    <li className="group">
+                      <Link to="/" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Trial Center</span>
+                        <Star className="h-4 w-4 text-gray-300 invisible group-hover:visible" />
+                      </Link>
+                    </li>
+                    <li className="group">
+                      <Link to="/finance" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Finance</span>
+                        <Star className="h-4 w-4 text-gray-300 invisible group-hover:visible" />
+                      </Link>
+                    </li>
+                    <li className="group">
+                      <Link to="/manufacturing" className="flex items-center justify-between py-2 px-2 text-gray-700 hover:bg-gray-100 rounded">
+                        <span>Manufacturing and Supply Chain</span>
+                        <Star className="h-4 w-4 text-gray-300 invisible group-hover:visible" />
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
           
           <Link to="/" className="flex items-center" onMouseEnter={handleLogoHover}>
             <div className="h-8 w-14 bg-sap-blue flex items-center justify-center text-white font-bold">
