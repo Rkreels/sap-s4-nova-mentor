@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
@@ -18,6 +17,7 @@ const SAPNavigationBar: React.FC = () => {
     { name: 'Procurement', path: '/procurement' },
     { name: 'Project Management', path: '/project-management' },
     { name: 'Sales', path: '/sales' },
+    { name: 'Other', path: '/other' },
   ];
 
   const handleNavItemHover = (item: string) => {
@@ -32,44 +32,31 @@ const SAPNavigationBar: React.FC = () => {
     }
   };
 
-  const handleMenuButtonHover = () => {
-    if (isEnabled) {
-      speak("This is the menu button. Click it to expand or collapse the sidebar navigation.");
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') {
+      return true;
     }
+    return location.pathname.startsWith(path) && path !== '/';
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 w-full">
-      <div className="flex items-center h-12">
-        <button 
-          className="flex items-center justify-center h-12 w-12 hover:bg-gray-100" 
-          onMouseEnter={handleMenuButtonHover}
-          onClick={() => {
-            if (isEnabled) {
-              speak("This menu button toggles the sidebar navigation, which provides access to additional features and functions.");
-            }
-          }}
-        >
-          <Menu className="h-5 w-5 text-gray-600" />
-        </button>
-        
-        <div className="flex overflow-x-auto hide-scrollbar">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`px-4 h-full flex items-center whitespace-nowrap ${
-                location.pathname === item.path 
-                  ? 'text-sap-blue border-b-2 border-sap-blue font-medium' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-              onMouseEnter={() => handleNavItemHover(item.name)}
-              onClick={() => handleNavItemClick(item.name)}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
+    <nav className="bg-white border-b border-gray-200 w-full overflow-hidden">
+      <div className="flex items-center h-12 overflow-x-auto hide-scrollbar">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`px-4 h-full flex items-center whitespace-nowrap ${
+              isActive(item.path) 
+                ? 'text-sap-blue border-b-2 border-sap-blue font-medium' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+            onMouseEnter={() => handleNavItemHover(item.name)}
+            onClick={() => handleNavItemClick(item.name)}
+          >
+            {item.name}
+          </Link>
+        ))}
       </div>
     </nav>
   );

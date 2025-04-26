@@ -1,13 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell, HelpCircle, Volume2, VolumeX } from 'lucide-react';
+import { Search, Bell, HelpCircle, Volume2, VolumeX, Clock, User, Settings, Info, FileText, LogOut } from 'lucide-react';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
 import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
-const SAPHeader: React.FC = () => {
+interface SAPHeaderProps {
+  onMenuClick: () => void;
+}
+
+const SAPHeader: React.FC<SAPHeaderProps> = ({ onMenuClick }) => {
   const { isEnabled, toggle } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
+  const [showUserMenu, setShowUserMenu] = useState(false);
   
   const handleLogoHover = () => {
     if (isEnabled) {
@@ -46,16 +51,29 @@ const SAPHeader: React.FC = () => {
     }
   };
 
+  const toggleUserMenu = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
   return (
     <header className="bg-white shadow-sm w-full">
       <div className="flex items-center justify-between px-4 h-16">
         <div className="flex items-center">
+          <button 
+            className="mr-4 p-2 text-gray-600 hover:text-gray-800" 
+            onClick={onMenuClick}
+          >
+            <Menu size={20} />
+          </button>
+          
           <Link to="/" className="flex items-center" onMouseEnter={handleLogoHover}>
-            <div className="h-8 w-14 bg-sap-blue flex items-center justify-center rounded text-white font-bold">
+            <div className="h-8 w-14 bg-sap-blue flex items-center justify-center text-white font-bold">
               SAP
             </div>
-            <span className="ml-3 font-semibold text-sap-text">Home</span>
-            <span className="ml-1">▼</span>
+            <div className="ml-3 flex items-center">
+              <span className="font-semibold text-gray-800">Home</span>
+              <span className="ml-1 text-xs">▼</span>
+            </div>
           </Link>
         </div>
         
@@ -108,17 +126,57 @@ const SAPHeader: React.FC = () => {
             )}
           </button>
           
-          <button 
-            className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium"
-            onMouseEnter={handleUserHover}
-            onClick={() => {
-              if (isEnabled) {
-                speak("This user profile menu allows you to manage your account settings, preferences, and log out of the system.");
-              }
-            }}
-          >
-            UT
-          </button>
+          <div className="relative">
+            <button 
+              className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium"
+              onMouseEnter={handleUserHover}
+              onClick={toggleUserMenu}
+            >
+              UT
+            </button>
+            
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-1 w-64 bg-white border rounded-md shadow-lg z-20">
+                <div className="p-3 border-b">
+                  <p className="font-medium">USER15506 Trial</p>
+                </div>
+                <div className="py-1">
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Clock className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>Recent Activities</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Star className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>Frequently Used</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Search className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>App Finder</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Settings className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>Settings</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Edit className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>Edit Current Page</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <Info className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>About</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <FileText className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>My User Sessions</span>
+                  </button>
+                  <button className="w-full text-left px-4 py-2 flex items-center text-sm hover:bg-gray-100">
+                    <LogOut className="h-4 w-4 mr-3 text-gray-500" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

@@ -7,6 +7,7 @@ export const useVoiceAssistant = () => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [preferredVoice, setPreferredVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [speechQueue, setSpeechQueue] = useState<string[]>([]);
+  const [isActive, setIsActive] = useState(false);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -70,14 +71,25 @@ export const useVoiceAssistant = () => {
       utterance.pitch = 1;
       utterance.volume = 1;
       
-      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setIsActive(true);
+      };
+      
       utterance.onend = () => {
         setIsSpeaking(false);
         setSpeechQueue(current => current.slice(1));
+        if (speechQueue.length <= 1) {
+          setIsActive(false);
+        }
       };
+      
       utterance.onerror = () => {
         setIsSpeaking(false);
         setSpeechQueue(current => current.slice(1));
+        if (speechQueue.length <= 1) {
+          setIsActive(false);
+        }
       };
       
       speechSynthesis.speak(utterance);
@@ -88,9 +100,15 @@ export const useVoiceAssistant = () => {
   const speak = useCallback((text: string) => {
     if (!text.trim()) return;
     
+    // Stop current speech before adding new text to queue
+    if (speechSynthesis && isSpeaking) {
+      speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+    
     // Add to queue
     setSpeechQueue(current => [...current, text]);
-  }, []);
+  }, [isSpeaking, speechSynthesis]);
 
   // Stop speaking
   const stop = useCallback(() => {
@@ -98,6 +116,7 @@ export const useVoiceAssistant = () => {
       speechSynthesis.cancel();
       setIsSpeaking(false);
       setSpeechQueue([]);
+      setIsActive(false);
     }
   }, [speechSynthesis]);
 
