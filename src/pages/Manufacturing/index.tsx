@@ -4,6 +4,7 @@ import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import { Card, CardContent } from '../../components/ui/card';
 import { Monitor, Package, FileText, Wrench, HardDrive, ClipboardCheck } from 'lucide-react';
+import styles from './Manufacturing.module.css';
 
 interface ManagementCardProps {
   title: string;
@@ -14,20 +15,18 @@ interface ManagementCardProps {
 }
 
 const ManagementCard: React.FC<ManagementCardProps> = ({ title, subtitle, icon, value, onClick }) => (
-  <Card className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={onClick}>
-    <CardContent className="p-4">
-      <div className="flex items-start space-x-4">
-        <div className="p-2 rounded-lg bg-blue-50">
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-medium text-sm">{title}</h3>
-          {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
-          {value && <p className="text-2xl font-semibold mt-2">{value}</p>}
-        </div>
+  <div className={styles.card} onClick={onClick}>
+    <div className="flex items-start space-x-4">
+      <div className={styles.iconWrapper}>
+        {icon}
       </div>
-    </CardContent>
-  </Card>
+      <div>
+        <h3 className="font-medium text-sm">{title}</h3>
+        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        {value && <p className="text-2xl font-semibold mt-2">{value}</p>}
+      </div>
+    </div>
+  </div>
 );
 
 const Manufacturing: React.FC = () => {
@@ -45,8 +44,8 @@ const Manufacturing: React.FC = () => {
       <h1 className="text-2xl font-semibold mb-6">Manufacturing and Supply Chain</h1>
 
       <section>
-        <h2 className="text-lg font-medium mb-4">Production</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h2 className={styles.sectionTitle}>Production</h2>
+        <div className={styles.cardGrid}>
           <ManagementCard
             title="Monitor Material Coverage"
             subtitle="Net / Individual Seg."
@@ -77,8 +76,8 @@ const Manufacturing: React.FC = () => {
       </section>
 
       <section>
-        <h2 className="text-lg font-medium mb-4">Warehouse Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h2 className={styles.sectionTitle}>Warehouse Management</h2>
+        <div className={styles.cardGrid}>
           <ManagementCard
             title="Stock"
             subtitle="Single Material"
@@ -101,8 +100,8 @@ const Manufacturing: React.FC = () => {
       </section>
 
       <section>
-        <h2 className="text-lg font-medium mb-4">Quality Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h2 className={styles.sectionTitle}>Quality Management</h2>
+        <div className={styles.cardGrid}>
           <ManagementCard
             title="Quality Technician Overview"
             icon={<Monitor className="h-5 w-5 text-blue-600" />}
@@ -120,8 +119,8 @@ const Manufacturing: React.FC = () => {
       </section>
 
       <section>
-        <h2 className="text-lg font-medium mb-4">Service and Asset Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h2 className={styles.sectionTitle}>Service and Asset Management</h2>
+        <div className={styles.cardGrid}>
           <ManagementCard
             title="Create Maintenance Request"
             icon={<FileText className="h-5 w-5 text-blue-600" />}
