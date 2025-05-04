@@ -1,3 +1,37 @@
 
-import Manufacturing from './Manufacturing/index';
+import { Routes, Route } from 'react-router-dom';
+import ManufacturingDashboard from './Manufacturing/index';
+import ProductionPage from './Manufacturing/Production';
+import WarehousePage from './Manufacturing/Warehouse';
+import QualityPage from './Manufacturing/Quality';
+import ServicePage from './Manufacturing/Service';
+import ManufacturingKPIs from './Manufacturing/ManufacturingKPIs';
+import ProductionScheduling from './Manufacturing/ProductionScheduling';
+import CapacityPlanning from './Manufacturing/CapacityPlanning';
+import MaterialRequirements from './Manufacturing/MaterialRequirements';
+import ProductionReports from './Manufacturing/ProductionReports';
+import QualityAnalysis from './Manufacturing/QualityAnalysis';
+import CostAnalysis from './Manufacturing/CostAnalysis';
+import SupplyChainInsights from './Manufacturing/SupplyChainInsights';
+
+const Manufacturing = () => {
+  return (
+    <Routes>
+      <Route index element={<ManufacturingDashboard />} />
+      <Route path="production" element={<ProductionPage />} />
+      <Route path="warehouse" element={<WarehousePage />} />
+      <Route path="quality" element={<QualityPage />} />
+      <Route path="service" element={<ServicePage />} />
+      <Route path="kpis" element={<ManufacturingKPIs />} />
+      <Route path="production-scheduling" element={<ProductionScheduling />} />
+      <Route path="capacity-planning" element={<CapacityPlanning />} />
+      <Route path="material-requirements" element={<MaterialRequirements />} />
+      <Route path="production-reports" element={<ProductionReports />} />
+      <Route path="quality-analysis" element={<QualityAnalysis />} />
+      <Route path="cost-analysis" element={<CostAnalysis />} />
+      <Route path="supply-chain-insights" element={<SupplyChainInsights />} />
+    </Routes>
+  );
+};
+
 export default Manufacturing;

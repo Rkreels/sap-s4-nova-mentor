@@ -1,14 +1,16 @@
 
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { BarChart2, Box, Calendar, ChevronRight, Clipboard, ClipboardCheck, FileText, HardDrive, LayoutDashboard, Monitor, Package, Users, Wrench } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import styles from './Manufacturing.module.css';
 import { toast } from '../../components/ui/use-toast';
+import PageHeader from '../../components/page/PageHeader';
+import ProductionMetrics from './components/ProductionMetrics';
 
 interface ManufacturingCardProps {
   title: string;
@@ -33,7 +35,7 @@ const ManufacturingCard: React.FC<ManufacturingCardProps> = ({ title, subtitle, 
   </div>
 );
 
-const Manufacturing: React.FC = () => {
+const ManufacturingDashboard: React.FC = () => {
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   const navigate = useNavigate();
@@ -44,16 +46,27 @@ const Manufacturing: React.FC = () => {
     }
   }, [isEnabled, speak]);
 
-  const handleCardClick = (area: string, action: string) => {
+  const handleCardClick = (area: string, action: string, path: string) => {
     console.log(`${area} - ${action} clicked`);
     toast({
       title: `${action}`,
       description: `You selected ${action} in the ${area} area`,
     });
+    navigate(`/manufacturing/${path}`);
+  };
+
+  const handleSectionNav = (path: string) => {
+    navigate(`/manufacturing/${path}`);
   };
 
   return (
     <div className="container mx-auto p-6 space-y-8">
+      <PageHeader 
+        title="Manufacturing and Supply Chain"
+        description="Manage your production, warehouse, quality, and service operations"
+        voiceIntroduction="Welcome to Manufacturing and Supply Chain. Here you can manage production, warehouse, quality, and service operations."
+      />
+
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Manufacturing and Supply Chain</h1>
         <div className="flex space-x-2">
@@ -66,6 +79,8 @@ const Manufacturing: React.FC = () => {
         </div>
       </div>
 
+      <ProductionMetrics />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Card className="col-span-1 p-6">
           <div className="flex items-center mb-6">
@@ -77,17 +92,17 @@ const Manufacturing: React.FC = () => {
           
           <div className="space-y-3">
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between" 
-                    onClick={() => handleCardClick('Overview', 'Production Dashboard')}>
+                    onClick={() => handleCardClick('Overview', 'Production Dashboard', '')}>
               <span>Production Dashboard</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Overview', 'Supply Chain Insights')}>
+                    onClick={() => handleCardClick('Overview', 'Supply Chain Insights', 'supply-chain-insights')}>
               <span>Supply Chain Insights</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Overview', 'Manufacturing KPIs')}>
+                    onClick={() => handleCardClick('Overview', 'Manufacturing KPIs', 'kpis')}>
               <span>Manufacturing KPIs</span>
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -104,17 +119,17 @@ const Manufacturing: React.FC = () => {
           
           <div className="space-y-3">
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Planning', 'Production Scheduling')}>
+                    onClick={() => handleCardClick('Planning', 'Production Scheduling', 'production-scheduling')}>
               <span>Production Scheduling</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Planning', 'Capacity Planning')}>
+                    onClick={() => handleCardClick('Planning', 'Capacity Planning', 'capacity-planning')}>
               <span>Capacity Planning</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Planning', 'Material Requirements')}>
+                    onClick={() => handleCardClick('Planning', 'Material Requirements', 'material-requirements')}>
               <span>Material Requirements</span>
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -131,17 +146,17 @@ const Manufacturing: React.FC = () => {
           
           <div className="space-y-3">
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Analytics', 'Production Reports')}>
+                    onClick={() => handleCardClick('Analytics', 'Production Reports', 'production-reports')}>
               <span>Production Reports</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Analytics', 'Quality Analysis')}>
+                    onClick={() => handleCardClick('Analytics', 'Quality Analysis', 'quality-analysis')}>
               <span>Quality Analysis</span>
               <ChevronRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleCardClick('Analytics', 'Cost Analysis')}>
+                    onClick={() => handleCardClick('Analytics', 'Cost Analysis', 'cost-analysis')}>
               <span>Cost Analysis</span>
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -151,10 +166,10 @@ const Manufacturing: React.FC = () => {
 
       <Tabs defaultValue="production" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="production">Production</TabsTrigger>
-          <TabsTrigger value="warehouse">Warehouse Management</TabsTrigger>
-          <TabsTrigger value="quality">Quality Management</TabsTrigger>
-          <TabsTrigger value="service">Service & Asset Management</TabsTrigger>
+          <TabsTrigger value="production" onClick={() => handleSectionNav('production')}>Production</TabsTrigger>
+          <TabsTrigger value="warehouse" onClick={() => handleSectionNav('warehouse')}>Warehouse Management</TabsTrigger>
+          <TabsTrigger value="quality" onClick={() => handleSectionNav('quality')}>Quality Management</TabsTrigger>
+          <TabsTrigger value="service" onClick={() => handleSectionNav('service')}>Service & Asset Management</TabsTrigger>
         </TabsList>
         
         <TabsContent value="production">
@@ -165,33 +180,33 @@ const Manufacturing: React.FC = () => {
                 title="Monitor Material Coverage"
                 subtitle="Net / Individual Seg."
                 icon={<Monitor className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Monitor Material Coverage')}
+                onClick={() => handleCardClick('Production', 'Monitor Material Coverage', 'production')}
               />
               <ManufacturingCard
                 title="Check Material Coverage"
                 icon={<Package className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Check Material Coverage')}
+                onClick={() => handleCardClick('Production', 'Check Material Coverage', 'production')}
               />
               <ManufacturingCard
                 title="Maintain PIRs"
                 icon={<FileText className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Maintain PIRs')}
+                onClick={() => handleCardClick('Production', 'Maintain PIRs', 'production')}
               />
               <ManufacturingCard
                 title="Schedule MRP Runs"
                 icon={<HardDrive className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Schedule MRP Runs')}
+                onClick={() => handleCardClick('Production', 'Schedule MRP Runs', 'production')}
               />
               <ManufacturingCard
                 title="Manage Production Orders"
                 subtitle="Orders"
                 icon={<ClipboardCheck className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Manage Production Orders')}
+                onClick={() => handleCardClick('Production', 'Manage Production Orders', 'production')}
               />
               <ManufacturingCard
                 title="Confirm Production Operation"
                 icon={<Wrench className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Production', 'Confirm Production Operation')}
+                onClick={() => handleCardClick('Production', 'Confirm Production Operation', 'production')}
               />
             </div>
           </section>
@@ -205,23 +220,23 @@ const Manufacturing: React.FC = () => {
                 title="Stock"
                 subtitle="Single Material"
                 icon={<Box className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Warehouse', 'Stock')}
+                onClick={() => handleCardClick('Warehouse', 'Stock', 'warehouse')}
               />
               <ManufacturingCard
                 title="Manage Stock"
                 icon={<Package className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Warehouse', 'Manage Stock')}
+                onClick={() => handleCardClick('Warehouse', 'Manage Stock', 'warehouse')}
               />
               <ManufacturingCard
                 title="Schedule Inbound Delivery Creation"
                 icon={<Calendar className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Warehouse', 'Schedule Inbound Delivery Creation')}
+                onClick={() => handleCardClick('Warehouse', 'Schedule Inbound Delivery Creation', 'warehouse')}
               />
               <ManufacturingCard
                 title="Change Inbound Deliveries"
                 subtitle="Deliveries"
                 icon={<Clipboard className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Warehouse', 'Change Inbound Deliveries')}
+                onClick={() => handleCardClick('Warehouse', 'Change Inbound Deliveries', 'warehouse')}
               />
             </div>
           </section>
@@ -234,18 +249,18 @@ const Manufacturing: React.FC = () => {
               <ManufacturingCard
                 title="Quality Technician Overview"
                 icon={<Users className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Quality', 'Quality Technician Overview')}
+                onClick={() => handleCardClick('Quality', 'Quality Technician Overview', 'quality')}
               />
               <ManufacturingCard
                 title="Manage Inspection Lots"
                 icon={<FileText className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Quality', 'Manage Inspection Lots')}
+                onClick={() => handleCardClick('Quality', 'Manage Inspection Lots', 'quality')}
               />
               <ManufacturingCard
                 title="Record Inspection Results"
                 icon={<ClipboardCheck className="h-5 w-5 text-blue-600" />}
                 value="161"
-                onClick={() => handleCardClick('Quality', 'Record Inspection Results')}
+                onClick={() => handleCardClick('Quality', 'Record Inspection Results', 'quality')}
               />
             </div>
           </section>
@@ -258,31 +273,31 @@ const Manufacturing: React.FC = () => {
               <ManufacturingCard
                 title="Create Maintenance Request"
                 icon={<FileText className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Service', 'Create Maintenance Request')}
+                onClick={() => handleCardClick('Service', 'Create Maintenance Request', 'service')}
               />
               <ManufacturingCard
                 title="Screen Maintenance Requests"
                 icon={<Monitor className="h-5 w-5 text-blue-600" />}
                 value="73"
                 subtitle="Open"
-                onClick={() => handleCardClick('Service', 'Screen Maintenance Requests')}
+                onClick={() => handleCardClick('Service', 'Screen Maintenance Requests', 'service')}
               />
               <ManufacturingCard
                 title="Manage Maintenance Notifications and Orders"
                 icon={<ClipboardCheck className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Service', 'Manage Maintenance Notifications and Orders')}
+                onClick={() => handleCardClick('Service', 'Manage Maintenance Notifications and Orders', 'service')}
               />
               <ManufacturingCard
                 title="Perform Maintenance Jobs"
                 icon={<Wrench className="h-5 w-5 text-blue-600" />}
                 value="0"
-                onClick={() => handleCardClick('Service', 'Perform Maintenance Jobs')}
+                onClick={() => handleCardClick('Service', 'Perform Maintenance Jobs', 'service')}
               />
               <ManufacturingCard
                 title="Maintenance Order Costs"
                 subtitle="Plan / Actual"
                 icon={<HardDrive className="h-5 w-5 text-blue-600" />}
-                onClick={() => handleCardClick('Service', 'Maintenance Order Costs')}
+                onClick={() => handleCardClick('Service', 'Maintenance Order Costs', 'service')}
               />
             </div>
           </section>
@@ -292,4 +307,4 @@ const Manufacturing: React.FC = () => {
   );
 };
 
-export default Manufacturing;
+export default ManufacturingDashboard;
