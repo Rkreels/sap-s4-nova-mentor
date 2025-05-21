@@ -4,6 +4,9 @@ import { Routes, Route } from 'react-router-dom';
 import Sales from './Sales';
 import CustomerDetail from './Sales/CustomerDetail';
 import SalesOrderDetail from './Sales/SalesOrderDetail';
+import ProductCatalog from './Sales/ProductCatalog';
+import SalesAnalytics from './Sales/SalesAnalytics';
+import QuotationManagement from './Sales/QuotationManagement';
 
 const SalesRoutes: React.FC = () => {
   return (
@@ -11,6 +14,9 @@ const SalesRoutes: React.FC = () => {
       <Route index element={<Sales />} />
       <Route path="customer/:customerId" element={<CustomerDetail />} />
       <Route path="order/:orderId" element={<SalesOrderDetail />} />
+      <Route path="products" element={<ProductCatalog />} />
+      <Route path="analytics" element={<SalesAnalytics />} />
+      <Route path="quotations" element={<QuotationManagement />} />
     </Routes>
   );
 };
