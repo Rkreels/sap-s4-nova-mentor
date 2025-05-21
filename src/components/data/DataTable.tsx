@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface Column {
   key: string;
   header: string;
-  render?: (value: any) => React.ReactNode;
+  render?: (value: any, row?: any) => React.ReactNode;
 }
 
 interface DataTableProps {
@@ -29,7 +29,7 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data, className = "" }) 
           <TableRow key={index}>
             {columns.map((column) => (
               <TableCell key={column.key}>
-                {column.render ? column.render(row[column.key]) : row[column.key]}
+                {column.render ? column.render(row[column.key], row) : row[column.key]}
               </TableCell>
             ))}
           </TableRow>
