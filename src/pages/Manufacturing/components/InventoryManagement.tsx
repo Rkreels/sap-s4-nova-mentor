@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Box, Package, TrendingUp, BarChart2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
-import { DataTable } from '../../../components/data/DataTable';
+import DataTable from '../../../components/data/DataTable';
 
 const InventoryManagement = () => {
   // Sample inventory data

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -7,7 +6,7 @@ import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import PageHeader from '../../components/page/PageHeader';
 import { ArrowLeft, Calendar, Filter, Download, Clock } from 'lucide-react';
 import { Card } from '../../components/ui/card';
-import { DataTable } from '../../components/data/DataTable';
+import DataTable from '../../components/data/DataTable';
 
 const CapacityPlanning: React.FC = () => {
   const navigate = useNavigate();

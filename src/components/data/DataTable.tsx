@@ -2,7 +2,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface Column {
+export interface Column {
   key: string;
   header: string;
   render?: (value: any, row?: any) => React.ReactNode;

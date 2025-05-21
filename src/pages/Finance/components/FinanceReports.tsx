@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Download, Filter, Calendar, BarChart2, FileText } from 'lucide-react';
-import { DataTable } from '../../../components/data/DataTable';
+import DataTable from '../../../components/data/DataTable';
 
 const FinanceReports: React.FC = () => {
   // Sample data for the table

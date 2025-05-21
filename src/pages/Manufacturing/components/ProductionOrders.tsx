@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '../../../components/ui/button';
-import { DataTable } from '../../../components/data/DataTable';
+import DataTable from '../../../components/data/DataTable';
 import { Search, Filter, Download, Plus } from 'lucide-react';
 
 const ProductionOrders = () => {
