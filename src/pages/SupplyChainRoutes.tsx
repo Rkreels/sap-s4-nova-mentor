@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import SupplyChain from './SupplyChain';
 import PurchaseOrders from './SupplyChain/PurchaseOrders';
@@ -8,7 +9,7 @@ import InboundDeliveries from './SupplyChain/InboundDeliveries';
 import OutboundDeliveries from './SupplyChain/OutboundDeliveries';
 import Transportation from './SupplyChain/Transportation';
 
-const SupplyChainRoutes = () => {
+const SupplyChainRoutes: React.FC = () => {
   return (
     <Routes>
       <Route index element={<SupplyChain />} />
@@ -18,7 +19,6 @@ const SupplyChainRoutes = () => {
       <Route path="inbound-deliveries" element={<InboundDeliveries />} />
       <Route path="outbound-deliveries" element={<OutboundDeliveries />} />
       <Route path="transportation" element={<Transportation />} />
-      {/* Add additional supply chain routes here */}
     </Routes>
   );
 };
