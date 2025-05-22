@@ -1,17 +1,15 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import SAPLayout from './components/SAPLayout';
 import Dashboard from './pages/Dashboard';
-import Finance from './pages/Finance';
 import FinanceRoutes from './pages/FinanceRoutes';
 import Manufacturing from './pages/Manufacturing';
-import Sales from './pages/Sales';
-import SupplyChain from './pages/SupplyChain';
 import SupplyChainRoutes from './pages/SupplyChainRoutes';
 import ProjectManagementRoutes from './pages/ProjectManagementRoutes';
 import ProcurementRoutes from './pages/ProcurementRoutes';
 import SalesRoutes from './pages/SalesRoutes';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -25,6 +23,8 @@ function App() {
           <Route path="supply-chain/*" element={<SupplyChainRoutes />} />
           <Route path="procurement/*" element={<ProcurementRoutes />} />
           <Route path="project-management/*" element={<ProjectManagementRoutes />} />
+          {/* Remove duplicate Index route and redirect old path to Dashboard */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Router>
