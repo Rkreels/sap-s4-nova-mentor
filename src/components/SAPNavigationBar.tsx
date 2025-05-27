@@ -11,13 +11,15 @@ const SAPNavigationBar: React.FC = () => {
   
   const navItems = [
     { name: 'My Home', path: '/' },
-    { name: 'Trial Center', path: '/trial-center' },
     { name: 'Finance', path: '/finance' },
-    { name: 'Manufacturing and Supply Chain', path: '/manufacturing' },
-    { name: 'Procurement', path: '/procurement' },
-    { name: 'Project Management', path: '/project-management' },
     { name: 'Sales', path: '/sales' },
-    { name: 'Other', path: '/other' },
+    { name: 'Procurement', path: '/procurement' },
+    { name: 'Manufacturing', path: '/manufacturing' },
+    { name: 'Supply Chain', path: '/supply-chain' },
+    { name: 'Project Management', path: '/project-management' },
+    { name: 'Human Resources', path: '/human-resources' },
+    { name: 'Master Data', path: '/master-data' },
+    { name: 'Business Intelligence', path: '/business-intelligence' },
   ];
 
   const handleNavItemHover = (item: string) => {
