@@ -6,16 +6,16 @@ import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import PageHeader from '../../components/page/PageHeader';
 import { ArrowLeft } from 'lucide-react';
-import QualityControl from './components/QualityControl';
+import ProductionPlanning from './components/ProductionPlanning';
 
-const QualityPage: React.FC = () => {
+const ProductionPlanningPage: React.FC = () => {
   const navigate = useNavigate();
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
 
   React.useEffect(() => {
     if (isEnabled) {
-      speak('You are now in the Quality Management page. Here you can manage quality inspections, results, and quality-related processes.');
+      speak('You are now in Production Planning. Here you can manage production plans, capacity, and scheduling.');
     }
   }, [isEnabled, speak]);
 
@@ -31,15 +31,15 @@ const QualityPage: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
         <PageHeader
-          title="Quality Management"
-          description="Manage quality inspections, results, and quality-related processes"
-          voiceIntroduction="Welcome to Quality Management. Here you can manage all quality control activities."
+          title="Production Planning"
+          description="Manage production plans, capacity planning, and scheduling"
+          voiceIntroduction="Welcome to Production Planning. Here you can manage all production planning activities."
         />
       </div>
 
-      <QualityControl />
+      <ProductionPlanning />
     </div>
   );
 };
 
-export default QualityPage;
+export default ProductionPlanningPage;
