@@ -7,6 +7,12 @@ import AccountsReceivable from './Finance/AccountsReceivable';
 import CashManagement from './Finance/CashManagement';
 import BankAccounts from './Finance/BankAccounts';
 import FinancialReports from './Finance/FinancialReports';
+import AssetAccounting from './Finance/AssetAccounting';
+import CostCenterAccounting from './Finance/CostCenterAccounting';
+import ProfitCenterAccounting from './Finance/ProfitCenterAccounting';
+import FinancialPlanning from './Finance/FinancialPlanning';
+import Treasury from './Finance/Treasury';
+import FinanceCreditManagement from './Finance/FinanceCreditManagement';
 
 const FinanceRoutes = () => {
   return (
@@ -17,8 +23,13 @@ const FinanceRoutes = () => {
       <Route path="accounts-receivable" element={<AccountsReceivable />} />
       <Route path="cash-management" element={<CashManagement />} />
       <Route path="bank-accounts" element={<BankAccounts />} />
-      <Route path="financial-reports" element={<FinancialReports />} />
-      {/* Add additional finance routes here */}
+      <Route path="asset-accounting" element={<AssetAccounting />} />
+      <Route path="cost-center" element={<CostCenterAccounting />} />
+      <Route path="profit-center" element={<ProfitCenterAccounting />} />
+      <Route path="planning" element={<FinancialPlanning />} />
+      <Route path="treasury" element={<Treasury />} />
+      <Route path="credit-management" element={<FinanceCreditManagement />} />
+      <Route path="reports" element={<FinancialReports />} />
     </Routes>
   );
 };
