@@ -145,50 +145,24 @@ export const useVoiceAssistant = () => {
     }
   }, [speechSynthesis]);
 
-  // Generate detailed educational content
+  // Generate detailed educational content with comprehensive SAP S/4HANA information
   const generateEducationalContent = useCallback((topic: string, detail?: string) => {
     const educationalContent = {
-      "finance": `Finance module in SAP S/4HANA is designed for comprehensive financial management. 
-      It includes functionalities for general ledger accounting, accounts receivable, accounts payable, 
-      asset accounting, and financial reporting. For example, you can use the General Ledger section to 
-      record and track all financial transactions, while the Accounts Receivable section helps manage 
-      customer payments and outstanding invoices. The predictive accounting features use AI to forecast 
-      financial outcomes based on historical data and current trends.`,
+      "finance": `The Finance module in SAP S/4HANA provides comprehensive financial management capabilities. It includes General Ledger for real-time financial postings, Accounts Payable for vendor invoice processing and payments, Accounts Receivable for customer billing and collections, Asset Accounting for fixed asset management, Cost Center Accounting for internal cost allocation, Cash Management for liquidity planning, and Financial Planning for budgeting and forecasting. The module uses the Universal Journal for simplified data model and provides real-time financial insights with embedded analytics.`,
       
-      "manufacturing": `The Manufacturing module in SAP S/4HANA supports all aspects of production planning 
-      and execution. It includes tools for production scheduling, material requirements planning, shop floor 
-      control, and quality management. For instance, you can use the Production Orders tile to create and 
-      schedule manufacturing orders, and the Material Requirements tile to ensure all necessary components 
-      are available for production. This module integrates with Inventory Management to provide a complete 
-      view of your supply chain.`,
+      "sales": `The Sales module in SAP S/4HANA manages the complete order-to-cash process. It includes Customer Management for maintaining customer master data, Sales Order Processing for order creation and fulfillment, Quotation Management for price quotes and proposals, Contract Management for framework agreements, Pricing for dynamic pricing strategies, Product Catalog for product information management, Billing for invoice creation, Credit Management for credit limit monitoring, Returns Processing for handling customer returns, Commission Management for sales representative compensation, Territory Management for sales area organization, and Sales Analytics for performance insights.`,
       
-      "procurement": `The Procurement module handles all purchasing activities, from vendor management to 
-      purchase order processing. It streamlines the procurement process by providing tools for vendor evaluation, 
-      contract management, and purchase requisition approval. For example, the Create Purchase Order tile 
-      allows you to generate new orders for goods or services, while the Supplier Directory provides access 
-      to your approved vendor list with performance ratings and contract terms.`,
+      "procurement": `The Procurement module handles the complete procure-to-pay process in SAP S/4HANA. It includes Purchase Requisitions for internal purchase requests, Purchase Orders for vendor ordering, Supplier Management for vendor master data and relationships, Contracts for procurement agreements, Source List for approved vendor lists, RFQ Management for quote solicitation, Invoice Verification for three-way matching, Catalog Management for punch-out catalogs, Spend Analysis for procurement insights, Supplier Performance for vendor evaluation, and Contract Management for agreement lifecycle management. The module integrates with Ariba for cloud-based procurement.`,
       
-      "sales": `The Sales module manages all customer-facing transactions and relationships. It includes 
-      functionality for sales order processing, quotation management, pricing, and customer relationship 
-      management. The Create Sales Order tile, for example, allows you to input new customer orders with 
-      appropriate products, quantities, and pricing. The Customer Analytics section provides insights into 
-      buying patterns and preferences to help drive sales strategies.`,
+      "manufacturing": `The Manufacturing module in SAP S/4HANA supports discrete and process manufacturing. It includes Production Planning for demand-driven planning, Production Scheduling for capacity and resource planning, Material Requirements Planning for component planning, Work Centers for resource management, Bills of Materials for product structures, Routings for operation sequences, Quality Management for quality control, Maintenance for equipment management, Warehouse Management for shop floor inventory, Cost Analysis for manufacturing cost control, Performance Analytics for OEE monitoring, and Production Reports for operational insights. The module uses advanced planning algorithms and machine learning for optimization.`,
       
-      "project": `Project Management in SAP S/4HANA helps plan, execute, and monitor projects of all sizes. 
-      It includes tools for project planning, resource allocation, time tracking, and project accounting. 
-      For instance, you can use the Active Projects tile to monitor ongoing projects and their status, 
-      while the Resource Planning tile helps allocate personnel and equipment to specific project tasks.`,
+      "supply-chain": `The Supply Chain module provides end-to-end supply chain visibility and control. It includes Inventory Management for stock optimization, Warehouse Management for efficient storage and picking, Transportation Management for logistics optimization, Demand Planning for forecast accuracy, Supply Planning for replenishment strategies, Distribution Planning for network optimization, Physical Inventory for cycle counting, Stock Transfers for inter-plant movements, Inbound and Outbound Deliveries for goods receipt and dispatch, and Vendor Managed Inventory for supplier-managed stock. The module leverages SAP IBP for advanced planning capabilities.`,
       
-      "trial": `The Trial Center provides a safe environment to explore and learn SAP S/4HANA features. 
-      It includes educational resources like tutorials and documentation, as well as a sandbox environment 
-      for practicing without affecting real data. The Tutorials tile provides step-by-step guides for learning 
-      specific functionalities, while the Sandbox Environment allows you to test processes in an isolated system.`,
+      "project": `Project Management in SAP S/4HANA provides comprehensive project lifecycle management. It includes Project Planning for work breakdown structures, Project Execution for progress tracking, Resource Management for capacity planning, Time Recording for effort capture, Cost Management for budget control, Risk Management for issue mitigation, Document Management for project artifacts, Portfolio Management for strategic alignment, Collaboration for team communication, and Project Analytics for performance insights. The module supports various project types including customer projects, investment projects, and internal orders.`,
       
-      "default": `SAP S/4HANA is an integrated enterprise resource planning (ERP) system designed to help 
-      organizations run their business processes efficiently. It combines transactional processing with 
-      real-time analytics, providing insights for better decision-making. The system is organized into modules 
-      like Finance, Manufacturing, Procurement, Sales, and Project Management, each addressing specific 
-      business functions while maintaining data integration across the organization.`
+      "maintenance": `The Maintenance module ensures optimal equipment performance and reliability. It includes Preventive Maintenance for scheduled maintenance, Corrective Maintenance for breakdown repairs, Predictive Maintenance using IoT sensors, Work Order Management for maintenance tasks, Equipment Master for asset information, Maintenance Planning for resource scheduling, Spare Parts Management for inventory control, Maintenance Analytics for performance monitoring, and Service Management for external maintenance services. The module integrates with SAP Asset Intelligence Network for collaborative maintenance.`,
+      
+      "default": `SAP S/4HANA is a next-generation ERP suite built on the SAP HANA in-memory platform. It combines transactional and analytical processing in real-time, enabling instant insights and intelligent automation. The system features a simplified data model with the Universal Journal, embedded analytics with SAP Analytics Cloud integration, intelligent technologies including machine learning and artificial intelligence, cloud-ready architecture for hybrid deployments, and a modern user experience with SAP Fiori apps. S/4HANA supports various deployment options including on-premise, cloud, and hybrid scenarios.`
     };
     
     const content = educationalContent[topic.toLowerCase() as keyof typeof educationalContent] || 

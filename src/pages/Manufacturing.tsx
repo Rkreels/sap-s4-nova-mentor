@@ -5,6 +5,7 @@ import ProductionPage from './Manufacturing/Production';
 import WarehousePage from './Manufacturing/Warehouse';
 import QualityPage from './Manufacturing/Quality';
 import ServicePage from './Manufacturing/Service';
+import Maintenance from './Manufacturing/Maintenance';
 import ManufacturingKPIs from './Manufacturing/ManufacturingKPIs';
 import ProductionScheduling from './Manufacturing/ProductionScheduling';
 import CapacityPlanning from './Manufacturing/CapacityPlanning';
@@ -26,6 +27,7 @@ const Manufacturing = () => {
       <Route path="warehouse" element={<WarehousePage />} />
       <Route path="quality" element={<QualityPage />} />
       <Route path="service" element={<ServicePage />} />
+      <Route path="maintenance" element={<Maintenance />} />
       <Route path="kpis" element={<ManufacturingKPIs />} />
       <Route path="production-scheduling" element={<ProductionScheduling />} />
       <Route path="production-planning" element={<ProductionPlanning />} />

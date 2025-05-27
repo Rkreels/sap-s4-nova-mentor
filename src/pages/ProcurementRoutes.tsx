@@ -1,14 +1,15 @@
 
-import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Procurement from './Procurement';
 import SupplierDetail from './Procurement/SupplierDetail';
+import RFQManagement from './Procurement/RFQManagement';
 
-const ProcurementRoutes: React.FC = () => {
+const ProcurementRoutes = () => {
   return (
     <Routes>
       <Route index element={<Procurement />} />
-      <Route path="supplier/:supplierId" element={<SupplierDetail />} />
+      <Route path="suppliers/:id" element={<SupplierDetail />} />
+      <Route path="rfq" element={<RFQManagement />} />
     </Routes>
   );
 };

@@ -61,16 +61,22 @@ const ModuleNavigation: React.FC<ModuleNavigationProps> = ({ module }) => {
     manufacturing: [
       { name: 'Overview', path: '/manufacturing' },
       { name: 'Production Planning', path: '/manufacturing/production-planning' },
-      { name: 'Production Orders', path: '/manufacturing/production-orders' },
+      { name: 'Production Scheduling', path: '/manufacturing/production-scheduling' },
+      { name: 'Production Orders', path: '/manufacturing/production' },
       { name: 'Material Requirements', path: '/manufacturing/material-requirements' },
       { name: 'Capacity Planning', path: '/manufacturing/capacity-planning' },
-      { name: 'Shop Floor Control', path: '/manufacturing/shop-floor' },
+      { name: 'Work Centers', path: '/manufacturing/work-centers' },
+      { name: 'BOMs', path: '/manufacturing/boms' },
+      { name: 'Routings', path: '/manufacturing/routings' },
       { name: 'Quality Management', path: '/manufacturing/quality' },
       { name: 'Maintenance', path: '/manufacturing/maintenance' },
-      { name: 'Product Cost Planning', path: '/manufacturing/cost-planning' },
-      { name: 'Variant Configuration', path: '/manufacturing/variant-config' },
-      { name: 'Engineering Change', path: '/manufacturing/engineering-change' },
-      { name: 'Production Analytics', path: '/manufacturing/analytics' },
+      { name: 'Warehouse', path: '/manufacturing/warehouse' },
+      { name: 'Cost Analysis', path: '/manufacturing/cost-analysis' },
+      { name: 'Performance Analytics', path: '/manufacturing/performance-analytics' },
+      { name: 'Production Reports', path: '/manufacturing/production-reports' },
+      { name: 'Quality Analysis', path: '/manufacturing/quality-analysis' },
+      { name: 'KPIs', path: '/manufacturing/kpis' },
+      { name: 'Service', path: '/manufacturing/service' },
     ],
     'supply-chain': [
       { name: 'Overview', path: '/supply-chain' },
@@ -145,7 +151,7 @@ const ModuleNavigation: React.FC<ModuleNavigationProps> = ({ module }) => {
 
   const handleItemClick = (itemName: string) => {
     if (isEnabled) {
-      speak(`Navigating to ${itemName} in ${module} module`);
+      speak(`Navigating to ${itemName} in ${module} module. This section provides comprehensive tools for ${itemName.toLowerCase()} management and operations.`);
     }
   };
 

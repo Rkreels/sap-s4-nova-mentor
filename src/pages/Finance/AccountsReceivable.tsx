@@ -2,12 +2,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import PageHeader from '../../components/page/PageHeader';
-import { Card } from '../../components/ui/card';
+import { ArrowLeft } from 'lucide-react';
+import AccountsReceivableManagement from './components/AccountsReceivableManagement';
 
 const AccountsReceivable: React.FC = () => {
   const navigate = useNavigate();
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
+
+  React.useEffect(() => {
+    if (isEnabled) {
+      speak('You are now in Accounts Receivable. Here you can manage customer invoices, payment collections, and receivables aging in the order-to-cash cycle.');
+    }
+  }, [isEnabled, speak]);
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -22,15 +32,12 @@ const AccountsReceivable: React.FC = () => {
         </Button>
         <PageHeader
           title="Accounts Receivable"
-          description="Manage customer invoices, payments, and related transactions"
-          voiceIntroduction="Welcome to Accounts Receivable. Here you can manage customer invoices and payments."
+          description="Manage customer invoices, payments, and receivables aging"
+          voiceIntroduction="Welcome to Accounts Receivable management."
         />
       </div>
-      
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Accounts Receivable Dashboard</h2>
-        <p className="text-gray-500">Accounts receivable functionality will be implemented here.</p>
-      </Card>
+
+      <AccountsReceivableManagement />
     </div>
   );
 };
