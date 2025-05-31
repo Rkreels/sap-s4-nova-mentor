@@ -8,6 +8,14 @@ import SupplierManagement from './SupplyChain/SupplierManagement';
 import InboundDeliveries from './SupplyChain/InboundDeliveries';
 import OutboundDeliveries from './SupplyChain/OutboundDeliveries';
 import Transportation from './SupplyChain/Transportation';
+import InventoryManagement from './SupplyChain/InventoryManagement';
+import WarehouseManagement from './SupplyChain/WarehouseManagement';
+import StockTransfers from './SupplyChain/StockTransfers';
+import PhysicalInventory from './SupplyChain/PhysicalInventory';
+import DemandPlanning from './SupplyChain/DemandPlanning';
+import SupplyPlanning from './SupplyChain/SupplyPlanning';
+import DistributionPlanning from './SupplyChain/DistributionPlanning';
+import VendorManagedInventory from './SupplyChain/VendorManagedInventory';
 
 const SupplyChainRoutes: React.FC = () => {
   return (
@@ -19,6 +27,14 @@ const SupplyChainRoutes: React.FC = () => {
       <Route path="inbound-deliveries" element={<InboundDeliveries />} />
       <Route path="outbound-deliveries" element={<OutboundDeliveries />} />
       <Route path="transportation" element={<Transportation />} />
+      <Route path="inventory" element={<InventoryManagement />} />
+      <Route path="warehouse" element={<WarehouseManagement />} />
+      <Route path="stock-transfers" element={<StockTransfers />} />
+      <Route path="physical-inventory" element={<PhysicalInventory />} />
+      <Route path="demand-planning" element={<DemandPlanning />} />
+      <Route path="supply-planning" element={<SupplyPlanning />} />
+      <Route path="distribution-planning" element={<DistributionPlanning />} />
+      <Route path="vmi" element={<VendorManagedInventory />} />
     </Routes>
   );
 };
