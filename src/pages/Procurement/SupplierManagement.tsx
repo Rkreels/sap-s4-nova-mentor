@@ -154,7 +154,7 @@ const SupplierManagement: React.FC = () => {
         <Card className="p-4">
           <div className="text-sm text-gray-500">Top Performers</div>
           <div className="text-2xl font-bold">24</div>
-          <div className="text-sm text-blue-600">Rating > 4.5</div>
+          <div className="text-sm text-blue-600">Rating &gt; 4.5</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-gray-500">Total Spend</div>
