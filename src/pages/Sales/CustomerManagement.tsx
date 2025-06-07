@@ -358,7 +358,7 @@ const CustomerManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-semibold">High Value</h3>
-                  <p className="text-sm text-muted-foreground">Revenue > $1M</p>
+                  <p className="text-sm text-muted-foreground">Revenue &gt; $1M</p>
                   <div className="text-2xl font-bold mt-2">
                     {customers.filter(c => c.totalRevenue > 1000000).length}
                   </div>
@@ -372,7 +372,7 @@ const CustomerManagement: React.FC = () => {
                 </div>
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-semibold">Low Value</h3>
-                  <p className="text-sm text-muted-foreground">Revenue < $100K</p>
+                  <p className="text-sm text-muted-foreground">Revenue &lt; $100K</p>
                   <div className="text-2xl font-bold mt-2">
                     {customers.filter(c => c.totalRevenue < 100000).length}
                   </div>
@@ -399,7 +399,7 @@ const CustomerManagement: React.FC = () => {
                 </Button>
                 <Button variant="outline" className="h-20 flex flex-col">
                   <span>Credit Analysis</span>
-                  <span className="text-xs text-muted-foreground">Credit limits & usage</span>
+                  <span className="text-xs text-muted-foreground">Credit limits &amp; usage</span>
                 </Button>
                 <Button variant="outline" className="h-20 flex flex-col">
                   <span>Sales Performance</span>
