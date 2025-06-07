@@ -1,108 +1,109 @@
 
 import React, { useState, useEffect } from 'react';
-import PageHeader from '../../components/page/PageHeader';
-import { Card } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Calendar, Download, Printer, ChevronDown } from 'lucide-react';
-import { 
-  Bar, 
-  BarChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  LineChart, 
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from "recharts";
-
-// Sample data for analytics
-const salesTrend = [
-  { month: 'Jan', sales: 325000, target: 300000 },
-  { month: 'Feb', sales: 290000, target: 300000 },
-  { month: 'Mar', sales: 350000, target: 320000 },
-  { month: 'Apr', sales: 380000, target: 340000 },
-  { month: 'May', sales: 410000, target: 360000 },
-  { month: 'Jun', sales: 390000, target: 380000 },
-  { month: 'Jul', sales: 420000, target: 400000 },
-];
-
-const salesByRegion = [
-  { name: 'Europe', value: 45 },
-  { name: 'North America', value: 30 },
-  { name: 'Asia', value: 15 },
-  { name: 'Others', value: 10 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-const productPerformance = [
-  { name: 'Server Hardware', sales: 1245000, growth: 8.5 },
-  { name: 'Software Licenses', sales: 980000, growth: 12.3 },
-  { name: 'IT Services', sales: 845000, growth: 5.2 },
-  { name: 'Cloud Subscriptions', sales: 720000, growth: 18.7 },
-  { name: 'Security Solutions', sales: 530000, growth: 9.1 },
-];
-
-const customerSegments = [
-  { name: 'Enterprise', sales: 2450000, customers: 124, avgDeal: 19758 },
-  { name: 'Mid-Market', sales: 1320000, customers: 278, avgDeal: 4748 },
-  { name: 'SMB', sales: 850000, customers: 412, avgDeal: 2063 },
-  { name: 'Public Sector', sales: 520000, customers: 45, avgDeal: 11555 },
-];
-
-const forecastData = [
-  { quarter: 'Q1', forecast: 3200000, actual: 3400000 },
-  { quarter: 'Q2', forecast: 3800000, actual: 3950000 },
-  { quarter: 'Q3', forecast: 4100000, actual: 4050000 },
-  { quarter: 'Q4', forecast: 4500000, actual: 0, projected: 4650000 },
-];
+import { Button } from '../../components/ui/button';
+import { Download, Filter, TrendingUp, TrendingDown, Calendar, Users, DollarSign, Target } from 'lucide-react';
+import { Badge } from '../../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, AreaChart, Area, ComposedChart } from 'recharts';
 
 const SalesAnalytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [timePeriod, setTimePeriod] = useState('year');
+  const [timeRange, setTimeRange] = useState('12months');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API loading
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       setIsLoading(false);
     }, 1000);
-    
-    return () => clearTimeout(timer);
   }, []);
 
-  const renderLoading = () => (
-    <div className="h-80 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>
-  );
+  // Sample data for analytics
+  const salesData = [
+    { month: 'Jan', revenue: 125000, orders: 45, newCustomers: 12, target: 120000 },
+    { month: 'Feb', revenue: 142000, orders: 52, newCustomers: 18, target: 140000 },
+    { month: 'Mar', revenue: 138000, orders: 48, newCustomers: 15, target: 135000 },
+    { month: 'Apr', revenue: 165000, orders: 61, newCustomers: 22, target: 160000 },
+    { month: 'May', revenue: 158000, orders: 55, newCustomers: 19, target: 155000 },
+    { month: 'Jun', revenue: 172000, orders: 63, newCustomers: 25, target: 170000 },
+    { month: 'Jul', revenue: 145000, orders: 49, newCustomers: 16, target: 150000 },
+    { month: 'Aug', revenue: 189000, orders: 68, newCustomers: 28, target: 180000 },
+    { month: 'Sep', revenue: 176000, orders: 59, newCustomers: 21, target: 175000 },
+    { month: 'Oct', revenue: 195000, orders: 72, newCustomers: 32, target: 190000 },
+    { month: 'Nov', revenue: 182000, orders: 64, newCustomers: 24, target: 185000 },
+    { month: 'Dec', revenue: 205000, orders: 78, newCustomers: 35, target: 200000 }
+  ];
+
+  const productPerformance = [
+    { product: 'Enterprise Software', revenue: 450000, units: 125, growth: 15.2 },
+    { product: 'Professional Services', revenue: 320000, units: 89, growth: 8.7 },
+    { product: 'Hardware Solutions', revenue: 280000, units: 156, growth: -2.3 },
+    { product: 'Support Packages', revenue: 180000, units: 234, growth: 22.1 },
+    { product: 'Training Services', revenue: 120000, units: 67, growth: 12.8 }
+  ];
+
+  const salesRepPerformance = [
+    { name: 'Sarah Johnson', revenue: 285000, orders: 45, conversion: 68, target: 280000 },
+    { name: 'Mike Wilson', revenue: 245000, orders: 38, conversion: 62, target: 250000 },
+    { name: 'Lisa Chen', revenue: 195000, orders: 32, conversion: 58, target: 200000 },
+    { name: 'David Brown', revenue: 175000, orders: 28, conversion: 55, target: 180000 },
+    { name: 'Emma Davis', revenue: 165000, orders: 25, conversion: 52, target: 170000 }
+  ];
+
+  const regionData = [
+    { region: 'North America', revenue: 580000, share: 35, color: '#8884d8' },
+    { region: 'Europe', revenue: 450000, share: 27, color: '#82ca9d' },
+    { region: 'Asia Pacific', revenue: 320000, share: 19, color: '#ffc658' },
+    { region: 'Latin America', revenue: 180000, share: 11, color: '#ff7300' },
+    { region: 'Middle East', revenue: 130000, share: 8, color: '#00ff88' }
+  ];
+
+  const customerSegments = [
+    { segment: 'Enterprise', revenue: 850000, customers: 45, avgOrder: 18888 },
+    { segment: 'Mid-Market', revenue: 520000, customers: 128, avgOrder: 4062 },
+    { segment: 'Small Business', revenue: 280000, customers: 234, avgOrder: 1196 },
+    { segment: 'Startup', revenue: 120000, customers: 156, avgOrder: 769 }
+  ];
+
+  const kpiMetrics = [
+    { title: 'Total Revenue', value: '$2.1M', change: '+18.5%', trend: 'up', icon: DollarSign },
+    { title: 'Total Orders', value: '672', change: '+12.3%', trend: 'up', icon: Target },
+    { title: 'New Customers', value: '287', change: '+25.7%', trend: 'up', icon: Users },
+    { title: 'Avg Order Value', value: '$3,125', change: '+5.2%', trend: 'up', icon: TrendingUp },
+    { title: 'Conversion Rate', value: '14.8%', change: '+2.1%', trend: 'up', icon: TrendingUp },
+    { title: 'Customer Retention', value: '89.2%', change: '-1.3%', trend: 'down', icon: TrendingDown }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="h-64 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <PageHeader 
-        title="Sales Analytics" 
-        description="Comprehensive analysis of your sales performance"
-        voiceIntroduction="Welcome to Sales Analytics. This dashboard provides a comprehensive view of your sales performance, trends, and forecasts."
-      />
-
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold">Sales Analytics</h1>
+        <div className="flex space-x-2">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3months">Last 3 months</SelectItem>
+              <SelectItem value="6months">Last 6 months</SelectItem>
+              <SelectItem value="12months">Last 12 months</SelectItem>
+              <SelectItem value="ytd">Year to date</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline">
-            <Calendar className="h-4 w-4 mr-2" />
-            {timePeriod === 'year' ? 'Year to Date' : 
-             timePeriod === 'quarter' ? 'Current Quarter' : 'Current Month'}
-            <ChevronDown className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Printer className="h-4 w-4 mr-2" />
-            Print
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
           </Button>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
@@ -111,378 +112,324 @@ const SalesAnalytics: React.FC = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
-        <TabsList className="grid w-full grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {kpiMetrics.map((metric, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{metric.title}</p>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <div className={`text-sm flex items-center ${
+                    metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {metric.trend === 'up' ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                    {metric.change}
+                  </div>
+                </div>
+                <metric.icon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="products">Product Analysis</TabsTrigger>
-          <TabsTrigger value="customers">Customer Analysis</TabsTrigger>
-          <TabsTrigger value="forecast">Sales Forecast</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="salesreps">Sales Reps</TabsTrigger>
+          <TabsTrigger value="regions">Regions</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4">
-              <div className="flex flex-col">
-                <div className="text-sm text-muted-foreground">Total Sales</div>
-                <div className="text-2xl font-bold mt-2">€4.32M</div>
-                <div className="text-xs text-green-600 mt-1">↑ 12.4% vs last year</div>
-              </div>
-            </Card>
-            
-            <Card className="p-4">
-              <div className="flex flex-col">
-                <div className="text-sm text-muted-foreground">Average Order Value</div>
-                <div className="text-2xl font-bold mt-2">€12,450</div>
-                <div className="text-xs text-green-600 mt-1">↑ 3.2% vs last year</div>
-              </div>
-            </Card>
-            
-            <Card className="p-4">
-              <div className="flex flex-col">
-                <div className="text-sm text-muted-foreground">Conversion Rate</div>
-                <div className="text-2xl font-bold mt-2">24.8%</div>
-                <div className="text-xs text-red-600 mt-1">↓ 1.5% vs last year</div>
-              </div>
-            </Card>
-          </div>
-          
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Sales Trend vs Target</h3>
-            
-            {isLoading ? renderLoading() : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue vs Target</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={salesData}>
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip 
-                      formatter={(value: number) => [`€${(value/1000).toFixed(0)}k`, 'Value']}
-                    />
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
                     <Legend />
-                    <Bar dataKey="sales" name="Actual Sales" fill="#0284c7" />
-                    <Bar dataKey="target" name="Sales Target" fill="#d1d5db" />
-                  </BarChart>
+                    <Bar dataKey="revenue" fill="#8884d8" name="Actual Revenue" />
+                    <Line type="monotone" dataKey="target" stroke="#ff7300" strokeWidth={2} name="Target" />
+                  </ComposedChart>
                 </ResponsiveContainer>
-                <div className="text-xs text-gray-500 mt-2 flex justify-between">
-                  <span>Last updated: Today, 09:30 AM</span>
-                </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Regional Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={regionData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ region, share }) => `${region} ${share}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="revenue"
+                    >
+                      {regionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <AreaChart data={salesData}>
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Area type="monotone" dataKey="revenue" stackId="1" stroke="#8884d8" fill="#8884d8" name="Revenue" />
+                  <Area type="monotone" dataKey="orders" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Orders (scaled)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
-          
+        </TabsContent>
+
+        <TabsContent value="trends" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Sales by Region</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={salesByRegion}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {salesByRegion.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Legend />
-                      <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
-            
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Top Performing Products</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="space-y-4">
-                  {productPerformance.map((product) => (
-                    <div key={product.name} className="border-b pb-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{product.name}</span>
-                        <span className="text-sm">€{(product.sales / 1000).toFixed(0)}k</span>
-                      </div>
-                      <div className="flex items-center mt-1">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-4">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${(product.sales / 1245000) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className={`text-xs ${product.growth > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {product.growth > 0 ? '↑' : '↓'} {Math.abs(product.growth)}%
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <Button variant="outline" className="w-full mt-2">
-                    View Full Product Report
-                  </Button>
-                </div>
-              )}
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="products">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Product Sales Analysis</h3>
-            
-            {isLoading ? renderLoading() : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={productPerformance} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 5 }}>
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip formatter={(value: number) => [`€${(value/1000).toFixed(0)}k`, 'Value']} />
-                    <Bar dataKey="sales" fill="#0284c7" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
-
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Growth by Product Category</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="space-y-4">
-                  {productPerformance.map((product) => (
-                    <div key={product.name} className="border-b pb-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{product.name}</span>
-                        <span className={`text-sm ${product.growth > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {product.growth > 0 ? '+' : ''}{product.growth}%
-                        </span>
-                      </div>
-                      <div className="flex items-center mt-1">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${product.growth > 10 ? 'bg-green-600' : product.growth > 0 ? 'bg-blue-600' : 'bg-red-600'}`}
-                            style={{ width: `${Math.min(Math.abs(product.growth) * 5, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Product Mix</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={productPerformance}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="sales"
-                        nameKey="name"
-                        label={({name}) => name}
-                      >
-                        {productPerformance.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => [`€${(value/1000).toFixed(0)}k`, 'Sales']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="customers">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Customer Segment Analysis</h3>
-            
-            {isLoading ? renderLoading() : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={customerSegments}>
-                    <XAxis dataKey="name" />
-                    <YAxis yAxisId="left" orientation="left" stroke="#0284c7" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="sales" name="Revenue (€)" fill="#0284c7" />
-                    <Bar yAxisId="right" dataKey="customers" name="Customers" fill="#10b981" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
-
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Average Deal Size by Segment</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="space-y-4">
-                  {customerSegments.map((segment) => (
-                    <div key={segment.name} className="border-b pb-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{segment.name}</span>
-                        <span className="text-sm">€{segment.avgDeal.toLocaleString()}</span>
-                      </div>
-                      <div className="mt-1">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${(segment.avgDeal / 20000) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Customer Distribution</h3>
-              
-              {isLoading ? renderLoading() : (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={customerSegments}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="customers"
-                        nameKey="name"
-                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {customerSegments.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} customers`, 'Count']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="forecast">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Sales Forecast vs Actual</h3>
-            
-            {isLoading ? renderLoading() : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={forecastData}>
-                    <XAxis dataKey="quarter" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Growth Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={salesData}>
+                    <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value: number) => [`€${(value/1000000).toFixed(1)}M`, 'Value']} />
-                    <Legend />
-                    <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#8884d8" strokeWidth={2} />
-                    <Line type="monotone" dataKey="actual" name="Actual" stroke="#82ca9d" strokeWidth={2} />
-                    <Line type="monotone" dataKey="projected" name="Projected" stroke="#ff7300" strokeWidth={2} strokeDasharray="5 5" />
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                    <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <Card className="p-6">
-              <div className="text-sm text-muted-foreground">Q1 Performance</div>
-              <div className="text-2xl font-bold mt-2">+6.3%</div>
-              <div className="text-xs text-green-600 mt-1">Above forecast</div>
-            </Card>
-            
-            <Card className="p-6">
-              <div className="text-sm text-muted-foreground">Q2 Performance</div>
-              <div className="text-2xl font-bold mt-2">+3.9%</div>
-              <div className="text-xs text-green-600 mt-1">Above forecast</div>
-            </Card>
-            
-            <Card className="p-6">
-              <div className="text-sm text-muted-foreground">Q3 Performance</div>
-              <div className="text-2xl font-bold mt-2">-1.2%</div>
-              <div className="text-xs text-red-600 mt-1">Below forecast</div>
-            </Card>
-            
-            <Card className="p-6">
-              <div className="text-sm text-muted-foreground">Q4 Forecast</div>
-              <div className="text-2xl font-bold mt-2">+3.3%</div>
-              <div className="text-xs text-blue-600 mt-1">Projected growth</div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Acquisition</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={salesData}>
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="newCustomers" fill="#82ca9d" name="New Customers" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
             </Card>
           </div>
+        </TabsContent>
 
-          <Card className="mt-6 p-6">
-            <h3 className="text-lg font-semibold mb-4">Annual Sales Forecast</h3>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div>
-                <div className="text-4xl font-bold">€16.05M</div>
-                <div className="text-sm text-muted-foreground mt-1">Projected Annual Revenue</div>
-                <div className="text-lg text-green-600 mt-2">↑ 8.4% YoY</div>
-              </div>
-              
+        <TabsContent value="products" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Progress to Annual Target</span>
-                    <span className="text-sm font-medium">74.8%</span>
+                {productPerformance.map((product, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{product.product}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ${product.revenue.toLocaleString()} revenue • {product.units} units sold
+                      </div>
+                    </div>
+                    <Badge variant={product.growth > 0 ? 'default' : 'destructive'}>
+                      {product.growth > 0 ? '+' : ''}{product.growth}%
+                    </Badge>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '74.8%' }}></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Q4 Pipeline Coverage</span>
-                    <span className="text-sm font-medium">2.3x</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-                  </div>
-                </div>
+                ))}
               </div>
-              
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  Pipeline Analysis
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Opportunity Review
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Forecast Settings
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  Download Forecast Report
-                </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Revenue Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={productPerformance}>
+                  <XAxis dataKey="product" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                  <Bar dataKey="revenue" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="salesreps" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Representative Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {salesRepPerformance.map((rep, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{rep.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ${rep.revenue.toLocaleString()} revenue • {rep.orders} orders • {rep.conversion}% conversion
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full" 
+                          style={{ width: `${(rep.revenue / rep.target) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    <Badge variant={rep.revenue >= rep.target ? 'default' : 'secondary'}>
+                      {Math.round((rep.revenue / rep.target) * 100)}% of target
+                    </Badge>
+                  </div>
+                ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Rep Revenue Comparison</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={salesRepPerformance}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+                  <Bar dataKey="revenue" fill="#8884d8" name="Actual" />
+                  <Bar dataKey="target" fill="#82ca9d" name="Target" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="regions" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Region</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {regionData.map((region, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div 
+                          className="w-4 h-4 rounded mr-3" 
+                          style={{ backgroundColor: region.color }}
+                        ></div>
+                        <span>{region.region}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">${region.revenue.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground">{region.share}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Regional Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={regionData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="revenue"
+                      label={({ region, share }) => `${share}%`}
+                    >
+                      {regionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="customers" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer Segments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {customerSegments.map((segment, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{segment.segment}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {segment.customers} customers • Avg order: ${segment.avgOrder.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">${segment.revenue.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">Total revenue</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer Segment Revenue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={customerSegments}>
+                  <XAxis dataKey="segment" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                  <Bar dataKey="revenue" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

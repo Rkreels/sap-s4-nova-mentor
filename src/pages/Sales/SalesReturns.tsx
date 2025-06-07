@@ -1,356 +1,731 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Search, PlusCircle, Filter, ChevronDown, AlertTriangle } from 'lucide-react';
-import { Input } from '../../components/ui/input';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../../components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
+import { Button } from '../../components/ui/button';
+import { Search, Plus, Filter, Edit, Trash2, Download, Upload, Package, RotateCcw, RefreshCw } from 'lucide-react';
+import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
+import { useToast } from '../../hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Textarea } from '../../components/ui/textarea';
+import DataTable from '../../components/data/DataTable';
+import { BarChart, Bar, LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+
+interface SalesReturn {
+  id: string;
+  returnDate: string;
+  customer: string;
+  customerId: string;
+  originalOrder: string;
+  returnType: 'Product Return' | 'Credit Return' | 'Exchange' | 'Warranty Return';
+  reason: string;
+  status: 'Pending' | 'Approved' | 'Processing' | 'Completed' | 'Rejected';
+  totalAmount: number;
+  refundAmount: number;
+  items: ReturnItem[];
+  approvedBy?: string;
+  processedDate?: string;
+  notes: string;
+}
+
+interface ReturnItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  condition: 'New' | 'Used' | 'Damaged' | 'Defective';
+  returnReason: string;
+}
+
+interface CreditMemo {
+  id: string;
+  returnId: string;
+  customer: string;
+  amount: number;
+  issueDate: string;
+  status: 'Draft' | 'Issued' | 'Applied' | 'Expired';
+  expiryDate: string;
+}
 
 const SalesReturns: React.FC = () => {
   const [activeTab, setActiveTab] = useState('returns');
+  const [returns, setReturns] = useState<SalesReturn[]>([]);
+  const [creditMemos, setCreditMemos] = useState<CreditMemo[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedReturn, setSelectedReturn] = useState<SalesReturn | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
 
-  const returnRequests = [
-    {
-      id: 'RR001',
-      customer: 'Acme Corp',
-      orderRef: 'SO78654',
-      createdDate: '2025-05-15',
-      products: '2 items',
-      reason: 'Damaged in Transit',
-      value: '$1,250.00',
-      status: 'New'
-    },
-    {
-      id: 'RR002',
-      customer: 'TechSolutions Inc',
-      orderRef: 'SO78432',
-      createdDate: '2025-05-14',
-      products: '1 item',
-      reason: 'Wrong Item',
-      value: '$750.00',
-      status: 'In Process'
-    },
-    {
-      id: 'RR003',
-      customer: 'Global Retail',
-      orderRef: 'SO78201',
-      createdDate: '2025-05-12',
-      products: '5 items',
-      reason: 'Defective Product',
-      value: '$3,200.00',
-      status: 'Approved'
-    },
-    {
-      id: 'RR004',
-      customer: 'Manufacturing Partners',
-      orderRef: 'SO77985',
-      createdDate: '2025-05-10',
-      products: '3 items',
-      reason: 'Order Error',
-      value: '$1,800.00',
-      status: 'Completed'
-    },
-    {
-      id: 'RR005',
-      customer: 'Logistic Solutions',
-      orderRef: 'SO77854',
-      createdDate: '2025-05-08',
-      products: '2 items',
-      reason: 'Customer Changed Mind',
-      value: '$950.00',
-      status: 'Rejected'
-    },
-  ];
+  useEffect(() => {
+    const sampleReturns: SalesReturn[] = [
+      {
+        id: 'RET-2025-001',
+        returnDate: '2025-05-20',
+        customer: 'Acme Corporation',
+        customerId: 'CUST-001',
+        originalOrder: 'SO-2025-001',
+        returnType: 'Product Return',
+        reason: 'Defective product',
+        status: 'Approved',
+        totalAmount: 15000,
+        refundAmount: 15000,
+        approvedBy: 'Sarah Johnson',
+        processedDate: '2025-05-21',
+        notes: 'Product received with manufacturing defect',
+        items: [
+          {
+            id: '1',
+            productId: 'PROD-001',
+            productName: 'Industrial Machine Component',
+            quantity: 1,
+            unitPrice: 15000,
+            totalPrice: 15000,
+            condition: 'Defective',
+            returnReason: 'Manufacturing defect'
+          }
+        ]
+      },
+      {
+        id: 'RET-2025-002',
+        returnDate: '2025-05-18',
+        customer: 'TechSolutions Inc',
+        customerId: 'CUST-002',
+        originalOrder: 'SO-2025-003',
+        returnType: 'Exchange',
+        reason: 'Wrong model ordered',
+        status: 'Processing',
+        totalAmount: 8500,
+        refundAmount: 0,
+        notes: 'Customer wants to exchange for different model',
+        items: [
+          {
+            id: '1',
+            productId: 'PROD-002',
+            productName: 'Software License',
+            quantity: 5,
+            unitPrice: 1700,
+            totalPrice: 8500,
+            condition: 'New',
+            returnReason: 'Wrong specification'
+          }
+        ]
+      },
+      {
+        id: 'RET-2025-003',
+        returnDate: '2025-05-15',
+        customer: 'Global Manufacturing',
+        customerId: 'CUST-003',
+        originalOrder: 'SO-2025-007',
+        returnType: 'Credit Return',
+        reason: 'Customer dissatisfaction',
+        status: 'Completed',
+        totalAmount: 12000,
+        refundAmount: 10800,
+        approvedBy: 'Mike Wilson',
+        processedDate: '2025-05-16',
+        notes: 'Partial refund due to restocking fee',
+        items: [
+          {
+            id: '1',
+            productId: 'PROD-003',
+            productName: 'Professional Services',
+            quantity: 20,
+            unitPrice: 600,
+            totalPrice: 12000,
+            condition: 'Used',
+            returnReason: 'Service not as expected'
+          }
+        ]
+      }
+    ];
 
-  const returnOrders = [
-    {
-      id: 'RO001',
-      returnRequest: 'RR003',
-      customer: 'Global Retail',
-      createdDate: '2025-05-13',
-      scheduledDate: '2025-05-20',
-      itemCount: 5,
-      value: '$3,200.00',
-      status: 'Scheduled'
-    },
-    {
-      id: 'RO002',
-      returnRequest: 'RR004',
-      customer: 'Manufacturing Partners',
-      createdDate: '2025-05-11',
-      scheduledDate: '2025-05-15',
-      itemCount: 3,
-      value: '$1,800.00',
-      status: 'Received'
-    },
-    {
-      id: 'RO003',
-      returnRequest: 'RR002',
-      customer: 'TechSolutions Inc',
-      createdDate: '2025-05-14',
-      scheduledDate: '2025-05-22',
-      itemCount: 1,
-      value: '$750.00',
-      status: 'Processing'
-    },
-  ];
+    const sampleCreditMemos: CreditMemo[] = [
+      {
+        id: 'CM-2025-001',
+        returnId: 'RET-2025-001',
+        customer: 'Acme Corporation',
+        amount: 15000,
+        issueDate: '2025-05-21',
+        status: 'Applied',
+        expiryDate: '2026-05-21'
+      },
+      {
+        id: 'CM-2025-002',
+        returnId: 'RET-2025-003',
+        customer: 'Global Manufacturing',
+        amount: 10800,
+        issueDate: '2025-05-16',
+        status: 'Issued',
+        expiryDate: '2026-05-16'
+      }
+    ];
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: { [key: string]: { color: string; bgColor: string } } = {
-      'New': { color: 'text-blue-800', bgColor: 'bg-blue-100' },
-      'In Process': { color: 'text-amber-800', bgColor: 'bg-amber-100' },
-      'Approved': { color: 'text-green-800', bgColor: 'bg-green-100' },
-      'Completed': { color: 'text-purple-800', bgColor: 'bg-purple-100' },
-      'Rejected': { color: 'text-red-800', bgColor: 'bg-red-100' },
-      'Scheduled': { color: 'text-indigo-800', bgColor: 'bg-indigo-100' },
-      'Received': { color: 'text-cyan-800', bgColor: 'bg-cyan-100' },
-      'Processing': { color: 'text-amber-800', bgColor: 'bg-amber-100' },
-    };
+    setTimeout(() => {
+      setReturns(sampleReturns);
+      setCreditMemos(sampleCreditMemos);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
 
-    const config = statusConfig[status] || { color: 'text-gray-800', bgColor: 'bg-gray-100' };
-    
-    return (
-      <Badge className={`${config.bgColor} ${config.color} hover:${config.bgColor}`}>
-        {status}
-      </Badge>
-    );
+  const filteredReturns = returns.filter(returnItem => {
+    const matchesSearch = returnItem.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         returnItem.customer.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || returnItem.status.toLowerCase() === filterStatus;
+    const matchesType = filterType === 'all' || returnItem.returnType === filterType;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const handleCreateReturn = () => {
+    setSelectedReturn(null);
+    setIsEditing(false);
+    setIsDialogOpen(true);
   };
+
+  const handleEditReturn = (returnItem: SalesReturn) => {
+    setSelectedReturn(returnItem);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteReturn = (returnId: string) => {
+    setReturns(prev => prev.filter(r => r.id !== returnId));
+    toast({
+      title: 'Return Deleted',
+      description: 'Return request has been successfully removed.',
+    });
+  };
+
+  const handleApproveReturn = (returnId: string) => {
+    setReturns(prev => prev.map(r => 
+      r.id === returnId ? { ...r, status: 'Approved' as const, approvedBy: 'Current User' } : r
+    ));
+    toast({
+      title: 'Return Approved',
+      description: 'Return request has been approved.',
+    });
+  };
+
+  const handleProcessReturn = (returnId: string) => {
+    setReturns(prev => prev.map(r => 
+      r.id === returnId ? { ...r, status: 'Processing' as const } : r
+    ));
+    toast({
+      title: 'Return Processing',
+      description: 'Return is now being processed.',
+    });
+  };
+
+  const returnColumns = [
+    { key: 'id', header: 'Return ID' },
+    { key: 'customer', header: 'Customer' },
+    { key: 'originalOrder', header: 'Original Order' },
+    { key: 'returnType', header: 'Type' },
+    { key: 'returnDate', header: 'Return Date' },
+    { 
+      key: 'totalAmount', 
+      header: 'Amount',
+      render: (value: number) => `$${value.toLocaleString()}`
+    },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value: string) => (
+        <Badge variant={
+          value === 'Completed' ? 'default' : 
+          value === 'Approved' || value === 'Processing' ? 'secondary' : 
+          value === 'Rejected' ? 'destructive' : 'outline'
+        }>
+          {value}
+        </Badge>
+      )
+    },
+    { 
+      key: 'actions', 
+      header: 'Actions',
+      render: (_, row: SalesReturn) => (
+        <div className="flex space-x-2">
+          <Button variant="ghost" size="sm" onClick={() => handleEditReturn(row)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          {row.status === 'Pending' && (
+            <Button variant="ghost" size="sm" onClick={() => handleApproveReturn(row.id)}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => handleDeleteReturn(row.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  const creditMemoColumns = [
+    { key: 'id', header: 'Credit Memo ID' },
+    { key: 'customer', header: 'Customer' },
+    { key: 'returnId', header: 'Return ID' },
+    { 
+      key: 'amount', 
+      header: 'Amount',
+      render: (value: number) => `$${value.toLocaleString()}`
+    },
+    { key: 'issueDate', header: 'Issue Date' },
+    { key: 'expiryDate', header: 'Expiry Date' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value: string) => (
+        <Badge variant={
+          value === 'Applied' ? 'default' : 
+          value === 'Issued' ? 'secondary' : 
+          value === 'Expired' ? 'destructive' : 'outline'
+        }>
+          {value}
+        </Badge>
+      )
+    }
+  ];
+
+  const returnMetrics = [
+    { 
+      title: 'Total Returns', 
+      value: returns.length.toString(), 
+      change: '+15%',
+      icon: RotateCcw
+    },
+    { 
+      title: 'Pending Approval', 
+      value: returns.filter(r => r.status === 'Pending').length.toString(), 
+      change: '+5%',
+      icon: Package
+    },
+    { 
+      title: 'Return Value', 
+      value: `$${returns.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()}`, 
+      change: '+12%',
+      icon: RefreshCw
+    },
+    { 
+      title: 'Refund Amount', 
+      value: `$${returns.reduce((sum, r) => sum + r.refundAmount, 0).toLocaleString()}`, 
+      change: '+8%',
+      icon: RefreshCw
+    }
+  ];
+
+  const returnReasonData = returns.reduce((acc, returnItem) => {
+    acc[returnItem.reason] = (acc[returnItem.reason] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const reasonChartData = Object.entries(returnReasonData).map(([reason, count]) => ({
+    reason,
+    count,
+    color: `hsl(${Math.random() * 360}, 70%, 50%)`
+  }));
+
+  const monthlyReturnData = [
+    { month: 'Jan', returns: 12, value: 45000 },
+    { month: 'Feb', returns: 15, value: 52000 },
+    { month: 'Mar', returns: 8, value: 28000 },
+    { month: 'Apr', returns: 18, value: 65000 },
+    { month: 'May', returns: 10, value: 35500 },
+  ];
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Sales Returns Management</h1>
+        <h1 className="text-2xl font-semibold">Sales Returns</h1>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
+          <Button variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Import
           </Button>
-          <Button size="sm">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Create Return Request
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={handleCreateReturn}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Return
           </Button>
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 flex items-start">
-        <AlertTriangle className="h-5 w-5 text-yellow-500 mr-3 mt-0.5" />
-        <div>
-          <h3 className="font-medium text-yellow-800">Returns Alert</h3>
-          <p className="text-sm text-yellow-700">There are 2 return requests awaiting approval and 1 return scheduled for pickup today.</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {returnMetrics.map((metric, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{metric.title}</p>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <div className="text-sm text-green-600">{metric.change}</div>
+                </div>
+                <metric.icon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <Tabs defaultValue="returns" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="returns">Return Requests</TabsTrigger>
-          <TabsTrigger value="orders">Return Orders</TabsTrigger>
-          <TabsTrigger value="analytics">Returns Analytics</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="returns">Returns</TabsTrigger>
+          <TabsTrigger value="creditMemos">Credit Memos</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="approval">Approval Workflow</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="returns" className="space-y-4 pt-4">
+        <TabsContent value="returns" className="space-y-4">
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-4">
-                <div className="relative w-72">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search return requests..." className="pl-8" />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-[150px] h-9">
-                      <SelectValue placeholder="Status" />
+            <CardHeader>
+              <CardTitle>Return Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between mb-4">
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search returns..." 
+                      className="pl-8 w-80"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="in-process">In Process</SelectItem>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="Product Return">Product Return</SelectItem>
+                      <SelectItem value="Credit Return">Credit Return</SelectItem>
+                      <SelectItem value="Exchange">Exchange</SelectItem>
+                      <SelectItem value="Warranty Return">Warranty Return</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Return ID</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Order Ref</TableHead>
-                      <TableHead>Created Date</TableHead>
-                      <TableHead>Products</TableHead>
-                      <TableHead>Return Reason</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {returnRequests.map(request => (
-                      <TableRow key={request.id}>
-                        <TableCell>{request.id}</TableCell>
-                        <TableCell>{request.customer}</TableCell>
-                        <TableCell>{request.orderRef}</TableCell>
-                        <TableCell>{request.createdDate}</TableCell>
-                        <TableCell>{request.products}</TableCell>
-                        <TableCell>{request.reason}</TableCell>
-                        <TableCell>{request.value}</TableCell>
-                        <TableCell>{getStatusBadge(request.status)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Process <ChevronDown className="h-4 w-4 ml-1" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+
+              {isLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <DataTable columns={returnColumns} data={filteredReturns} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="creditMemos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Credit Memos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <DataTable columns={creditMemoColumns} data={creditMemos} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Return Reasons</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={reasonChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ reason, count }) => `${reason} (${count})`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {reasonChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Return Trends</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={monthlyReturnData}>
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="returns" stroke="#8884d8" name="Returns Count" />
+                    <Line type="monotone" dataKey="value" stroke="#82ca9d" name="Return Value" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Return Value by Month</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyReturnData}>
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value, name) => [
+                    name === 'value' ? `$${Number(value).toLocaleString()}` : value,
+                    name === 'value' ? 'Return Value' : 'Returns Count'
+                  ]} />
+                  <Bar dataKey="value" fill="#8884d8" name="Return Value" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="approval" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Approvals</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {returns.filter(r => r.status === 'Pending').map(returnItem => (
+                  <div key={returnItem.id} className="flex justify-between items-center p-4 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{returnItem.id}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {returnItem.customer} • {returnItem.returnType} • ${returnItem.totalAmount.toLocaleString()}
+                      </div>
+                      <div className="text-sm">{returnItem.reason}</div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" onClick={() => handleApproveReturn(returnItem.id)}>
+                        Approve
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        Reject
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        Details
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {returns.filter(r => r.status === 'Pending').length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No pending approvals
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="orders" className="space-y-4 pt-4">
+        <TabsContent value="reports" className="space-y-4">
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-4">
-                <div className="relative w-72">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search return orders..." className="pl-8" />
-                </div>
-              </div>
-              
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Return Order</TableHead>
-                      <TableHead>Request Ref</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Created Date</TableHead>
-                      <TableHead>Scheduled Date</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {returnOrders.map(order => (
-                      <TableRow key={order.id}>
-                        <TableCell>{order.id}</TableCell>
-                        <TableCell>{order.returnRequest}</TableCell>
-                        <TableCell>{order.customer}</TableCell>
-                        <TableCell>{order.createdDate}</TableCell>
-                        <TableCell>{order.scheduledDate}</TableCell>
-                        <TableCell>{order.itemCount}</TableCell>
-                        <TableCell>{order.value}</TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4 pt-4">
-          <Card>
-            <CardContent className="pt-6 p-8 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-medium mb-6">Returns Analytics Dashboard</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                <div className="border rounded-md p-4 text-center">
-                  <div className="text-2xl font-semibold text-blue-600 mb-2">12</div>
-                  <div className="text-sm text-gray-500">Open Returns</div>
-                </div>
-                <div className="border rounded-md p-4 text-center">
-                  <div className="text-2xl font-semibold text-green-600 mb-2">$12,650</div>
-                  <div className="text-sm text-gray-500">Monthly Returns Value</div>
-                </div>
-                <div className="border rounded-md p-4 text-center">
-                  <div className="text-2xl font-semibold text-amber-600 mb-2">3.2%</div>
-                  <div className="text-sm text-gray-500">Return Rate</div>
-                </div>
-              </div>
-              <div className="w-full mt-8 h-64 bg-gray-50 rounded-md flex items-center justify-center">
-                <p className="text-gray-400">Return trend chart will be displayed here</p>
-              </div>
-              <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-md p-4">
-                  <h4 className="text-sm font-medium mb-4">Top Return Reasons</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Damaged in Transit</span>
-                      <span className="text-sm font-medium">32%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '32%' }}></div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="text-sm">Defective Product</span>
-                      <span className="text-sm font-medium">24%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '24%' }}></div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="text-sm">Wrong Item</span>
-                      <span className="text-sm font-medium">18%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '18%' }}></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="border rounded-md p-4">
-                  <h4 className="text-sm font-medium mb-4">Return Processing Time</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Average Time</span>
-                      <span className="text-sm font-medium">4.2 days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Fastest Return</span>
-                      <span className="text-sm font-medium">1.5 days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Slowest Return</span>
-                      <span className="text-sm font-medium">8.3 days</span>
-                    </div>
-                  </div>
-                </div>
+            <CardHeader>
+              <CardTitle>Return Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" className="h-20 flex flex-col">
+                  <span>Return Analysis</span>
+                  <span className="text-xs text-muted-foreground">Detailed return trends</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col">
+                  <span>Customer Return History</span>
+                  <span className="text-xs text-muted-foreground">Returns by customer</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col">
+                  <span>Product Return Analysis</span>
+                  <span className="text-xs text-muted-foreground">Returns by product</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex flex-col">
+                  <span>Financial Impact</span>
+                  <span className="text-xs text-muted-foreground">Return cost analysis</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Return' : 'Create New Return'}</DialogTitle>
+          </DialogHeader>
+          <ReturnForm 
+            returnItem={selectedReturn}
+            onSave={(returnData) => {
+              if (isEditing && selectedReturn) {
+                setReturns(prev => prev.map(r => 
+                  r.id === selectedReturn.id ? { ...r, ...returnData } : r
+                ));
+                toast({ title: 'Return Updated', description: 'Return has been successfully updated.' });
+              } else {
+                const newReturn: SalesReturn = {
+                  id: `RET-2025-${String(returns.length + 1).padStart(3, '0')}`,
+                  returnDate: new Date().toISOString().split('T')[0],
+                  items: [],
+                  refundAmount: 0,
+                  ...returnData as SalesReturn
+                };
+                setReturns(prev => [...prev, newReturn]);
+                toast({ title: 'Return Created', description: 'New return has been successfully created.' });
+              }
+              setIsDialogOpen(false);
+            }}
+            onCancel={() => setIsDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+};
+
+const ReturnForm: React.FC<{
+  returnItem: SalesReturn | null;
+  onSave: (data: Partial<SalesReturn>) => void;
+  onCancel: () => void;
+}> = ({ returnItem, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    customer: returnItem?.customer || '',
+    customerId: returnItem?.customerId || '',
+    originalOrder: returnItem?.originalOrder || '',
+    returnType: returnItem?.returnType || 'Product Return',
+    reason: returnItem?.reason || '',
+    status: returnItem?.status || 'Pending',
+    totalAmount: returnItem?.totalAmount || 0,
+    notes: returnItem?.notes || ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="customer">Customer</Label>
+          <Input
+            id="customer"
+            value={formData.customer}
+            onChange={(e) => setFormData(prev => ({ ...prev, customer: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="originalOrder">Original Order</Label>
+          <Input
+            id="originalOrder"
+            value={formData.originalOrder}
+            onChange={(e) => setFormData(prev => ({ ...prev, originalOrder: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="returnType">Return Type</Label>
+          <Select value={formData.returnType} onValueChange={(value) => setFormData(prev => ({ ...prev, returnType: value as any }))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Product Return">Product Return</SelectItem>
+              <SelectItem value="Credit Return">Credit Return</SelectItem>
+              <SelectItem value="Exchange">Exchange</SelectItem>
+              <SelectItem value="Warranty Return">Warranty Return</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="totalAmount">Total Amount</Label>
+          <Input
+            id="totalAmount"
+            type="number"
+            value={formData.totalAmount}
+            onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
+            required
+          />
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="reason">Return Reason</Label>
+        <Input
+          id="reason"
+          value={formData.reason}
+          onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+        />
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          Save Return
+        </Button>
+      </div>
+    </form>
   );
 };
 
