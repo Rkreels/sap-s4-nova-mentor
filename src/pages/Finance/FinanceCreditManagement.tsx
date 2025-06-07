@@ -1,55 +1,328 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Search, Plus, AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Badge } from '../../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Download, AlertTriangle, Shield, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
+import DataTable, { Column } from '../../components/data/DataTable';
+import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../components/ui/form';
+import { useForm } from 'react-hook-form';
 
 const FinanceCreditManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('customers');
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const customers = [
-    { id: 'CUST-001', name: 'Global Manufacturing Corp', creditLimit: '€500K', exposure: '€425K', rating: 'A+', utilization: '85%', status: 'Good' },
-    { id: 'CUST-002', name: 'Tech Solutions Ltd', creditLimit: '€300K', exposure: '€285K', rating: 'A', utilization: '95%', status: 'Watch' },
-    { id: 'CUST-003', name: 'Retail Partners Inc', creditLimit: '€750K', exposure: '€820K', rating: 'B+', utilization: '109%', status: 'Critical' },
-    { id: 'CUST-004', name: 'Service Dynamics', creditLimit: '€200K', exposure: '€150K', rating: 'A-', utilization: '75%', status: 'Good' },
-    { id: 'CUST-005', name: 'Industrial Holdings', creditLimit: '€1M', exposure: '€680K', rating: 'AA-', utilization: '68%', status: 'Good' },
+  const form = useForm({
+    defaultValues: {
+      customerName: '',
+      creditLimit: '',
+      riskRating: '',
+      paymentTerms: '',
+      currency: '',
+      collateral: ''
+    }
+  });
+
+  const [customers, setCustomers] = useState([
+    { id: 'CUS-001', name: 'ABC Manufacturing Ltd', creditLimit: '500,000', utilized: '425,000', available: '75,000', riskRating: 'AAA', paymentTerms: '30 days', overdue: '0', dso: '28', status: 'Active' },
+    { id: 'CUS-002', name: 'Global Tech Solutions', creditLimit: '1,000,000', utilized: '750,000', available: '250,000', riskRating: 'AA+', paymentTerms: '45 days', overdue: '25,000', dso: '42', status: 'Watch' },
+    { id: 'CUS-003', name: 'European Retailers Inc', creditLimit: '300,000', utilized: '280,000', available: '20,000', riskRating: 'A', paymentTerms: '60 days', overdue: '15,000', dso: '55', status: 'Active' },
+    { id: 'CUS-004', name: 'Industrial Components Co', creditLimit: '750,000', utilized: '650,000', available: '100,000', riskRating: 'BBB+', paymentTerms: '30 days', overdue: '45,000', dso: '65', status: 'Blocked' },
+    { id: 'CUS-005', name: 'Advanced Materials Group', creditLimit: '400,000', utilized: '320,000', available: '80,000', riskRating: 'AA', paymentTerms: '30 days', overdue: '0', dso: '25', status: 'Active' }
+  ]);
+
+  const [creditApplications, setCreditApplications] = useState([
+    { id: 'APP-001', customer: 'New Customer Ltd', requestedLimit: '250,000', currentLimit: '0', riskScore: '85', submittedDate: '2024-05-18', reviewer: 'John Smith', status: 'Under Review' },
+    { id: 'APP-002', customer: 'Expansion Corp', requestedLimit: '500,000', currentLimit: '300,000', riskScore: '92', submittedDate: '2024-05-19', reviewer: 'Sarah Johnson', status: 'Approved' },
+    { id: 'APP-003', customer: 'Startup Innovations', requestedLimit: '100,000', currentLimit: '0', riskScore: '65', submittedDate: '2024-05-20', reviewer: 'Mike Wilson', status: 'Rejected' },
+    { id: 'APP-004', customer: 'Established Firm LLC', requestedLimit: '800,000', currentLimit: '600,000', riskScore: '88', submittedDate: '2024-05-17', reviewer: 'Lisa Brown', status: 'Pending Documentation' }
+  ]);
+
+  const [collections, setCollections] = useState([
+    { id: 'COL-001', customer: 'Global Tech Solutions', invoiceNumber: 'INV-2024-001', amount: '25,000', overdueDays: '15', collectionStage: 'First Notice', assignedTo: 'Collection Team A', lastContact: '2024-05-18', status: 'In Progress' },
+    { id: 'COL-002', customer: 'European Retailers Inc', invoiceNumber: 'INV-2024-023', amount: '15,000', overdueDays: '22', collectionStage: 'Second Notice', assignedTo: 'Collection Team B', lastContact: '2024-05-17', status: 'In Progress' },
+    { id: 'COL-003', customer: 'Industrial Components Co', invoiceNumber: 'INV-2024-035', amount: '45,000', overdueDays: '35', collectionStage: 'Legal Notice', assignedTo: 'Legal Department', lastContact: '2024-05-16', status: 'Escalated' },
+    { id: 'COL-004', customer: 'Old Debt Ltd', invoiceNumber: 'INV-2024-012', amount: '8,500', overdueDays: '8', collectionStage: 'Friendly Reminder', assignedTo: 'Collection Team A', lastContact: '2024-05-19', status: 'Resolved' }
+  ]);
+
+  const [insurancePolicies, setInsurancePolicies] = useState([
+    { id: 'INS-001', customer: 'ABC Manufacturing Ltd', insurer: 'Euler Hermes', coverage: '80%', premium: '2,500', policyNumber: 'EH-2024-001', validUntil: '2024-12-31', status: 'Active' },
+    { id: 'INS-002', customer: 'Global Tech Solutions', insurer: 'Atradius', coverage: '75%', premium: '4,200', policyNumber: 'AT-2024-008', validUntil: '2024-11-30', status: 'Active' },
+    { id: 'INS-003', customer: 'European Retailers Inc', insurer: 'Coface', coverage: '70%', premium: '1,800', policyNumber: 'CF-2024-015', validUntil: '2025-01-15', status: 'Pending Renewal' },
+    { id: 'INS-004', customer: 'Advanced Materials Group', insurer: 'Euler Hermes', coverage: '85%', premium: '3,100', policyNumber: 'EH-2024-022', validUntil: '2024-10-20', status: 'Active' }
+  ]);
+
+  const handleCreate = (data: any) => {
+    const newCustomer = {
+      id: `CUS-${String(customers.length + 1).padStart(3, '0')}`,
+      name: data.customerName,
+      creditLimit: data.creditLimit,
+      utilized: '0',
+      available: data.creditLimit,
+      riskRating: data.riskRating,
+      paymentTerms: data.paymentTerms,
+      overdue: '0',
+      dso: '0',
+      status: 'Active'
+    };
+    setCustomers([...customers, newCustomer]);
+    setIsCreateDialogOpen(false);
+    form.reset();
+  };
+
+  const handleEdit = (customer: any) => {
+    setSelectedCustomer(customer);
+    form.reset({
+      customerName: customer.name,
+      creditLimit: customer.creditLimit,
+      riskRating: customer.riskRating,
+      paymentTerms: customer.paymentTerms
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = (data: any) => {
+    setCustomers(customers.map(c => c.id === selectedCustomer?.id ? { 
+      ...c, 
+      name: data.customerName,
+      creditLimit: data.creditLimit,
+      riskRating: data.riskRating,
+      paymentTerms: data.paymentTerms
+    } : c));
+    setIsEditDialogOpen(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleDelete = (id: string) => {
+    setCustomers(customers.filter(c => c.id !== id));
+  };
+
+  const customerColumns: Column[] = [
+    { key: 'id', header: 'Customer ID' },
+    { key: 'name', header: 'Customer Name' },
+    { 
+      key: 'creditLimit', 
+      header: 'Credit Limit',
+      render: (value) => (
+        <span className="font-semibold">€{value}</span>
+      )
+    },
+    { 
+      key: 'utilized', 
+      header: 'Utilized',
+      render: (value) => (
+        <span className="font-semibold text-orange-600">€{value}</span>
+      )
+    },
+    { 
+      key: 'available', 
+      header: 'Available',
+      render: (value) => (
+        <span className="font-semibold text-green-600">€{value}</span>
+      )
+    },
+    { 
+      key: 'riskRating', 
+      header: 'Risk Rating',
+      render: (value) => (
+        <Badge variant={
+          value.startsWith('AAA') || value.startsWith('AA') ? 'default' :
+          value.startsWith('A') ? 'outline' : 'secondary'
+        }>{value}</Badge>
+      )
+    },
+    { key: 'paymentTerms', header: 'Payment Terms' },
+    { 
+      key: 'overdue', 
+      header: 'Overdue',
+      render: (value) => (
+        <span className={`font-semibold ${value === '0' ? 'text-green-600' : 'text-red-600'}`}>
+          €{value}
+        </span>
+      )
+    },
+    { key: 'dso', header: 'DSO' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={
+          value === 'Active' ? 'default' :
+          value === 'Watch' ? 'secondary' : 'destructive'
+        }>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
-  const creditRequests = [
-    { id: 'CR-001', customer: 'New Client Solutions', amount: '€250K', purpose: 'Working Capital', status: 'Pending Review', submittedDate: '2024-05-25', reviewer: 'Credit Team' },
-    { id: 'CR-002', customer: 'Expansion Corp', amount: '€500K', purpose: 'Equipment Purchase', status: 'Under Analysis', submittedDate: '2024-05-23', reviewer: 'Senior Analyst' },
-    { id: 'CR-003', customer: 'Growth Industries', amount: '€150K', purpose: 'Inventory Financing', status: 'Approved', submittedDate: '2024-05-20', reviewer: 'Credit Manager' },
-    { id: 'CR-004', customer: 'Startup Ventures', amount: '€75K', purpose: 'Bridge Financing', status: 'Rejected', submittedDate: '2024-05-18', reviewer: 'Risk Committee' },
+  const applicationColumns: Column[] = [
+    { key: 'id', header: 'Application ID' },
+    { key: 'customer', header: 'Customer' },
+    { 
+      key: 'requestedLimit', 
+      header: 'Requested Limit',
+      render: (value) => (
+        <span className="font-semibold">€{value}</span>
+      )
+    },
+    { 
+      key: 'currentLimit', 
+      header: 'Current Limit',
+      render: (value) => (
+        <span className="font-semibold">€{value}</span>
+      )
+    },
+    { key: 'riskScore', header: 'Risk Score' },
+    { key: 'submittedDate', header: 'Submitted' },
+    { key: 'reviewer', header: 'Reviewer' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={
+          value === 'Approved' ? 'default' :
+          value === 'Rejected' ? 'destructive' : 'secondary'
+        }>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
-  const overdueAccounts = [
-    { customer: 'Tech Solutions Ltd', amount: '€45K', daysPastDue: 45, lastContact: '2024-05-20', nextAction: 'Legal Notice', priority: 'High' },
-    { customer: 'Retail Partners Inc', amount: '€125K', daysPastDue: 90, lastContact: '2024-05-15', nextAction: 'Collections Agency', priority: 'Critical' },
-    { customer: 'Service Dynamics', amount: '€12K', daysPastDue: 15, lastContact: '2024-05-25', nextAction: 'Payment Reminder', priority: 'Low' },
-    { customer: 'Small Business Co', amount: '€28K', daysPastDue: 60, lastContact: '2024-05-18', nextAction: 'Demand Letter', priority: 'Medium' },
+  const collectionColumns: Column[] = [
+    { key: 'id', header: 'Collection ID' },
+    { key: 'customer', header: 'Customer' },
+    { key: 'invoiceNumber', header: 'Invoice' },
+    { 
+      key: 'amount', 
+      header: 'Amount',
+      render: (value) => (
+        <span className="font-semibold text-red-600">€{value}</span>
+      )
+    },
+    { key: 'overdueDays', header: 'Overdue Days' },
+    { key: 'collectionStage', header: 'Stage' },
+    { key: 'assignedTo', header: 'Assigned To' },
+    { key: 'lastContact', header: 'Last Contact' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={
+          value === 'Resolved' ? 'default' :
+          value === 'Escalated' ? 'destructive' : 'secondary'
+        }>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
+
+  const insuranceColumns: Column[] = [
+    { key: 'id', header: 'Policy ID' },
+    { key: 'customer', header: 'Customer' },
+    { key: 'insurer', header: 'Insurer' },
+    { key: 'coverage', header: 'Coverage' },
+    { 
+      key: 'premium', 
+      header: 'Premium',
+      render: (value) => (
+        <span className="font-semibold">€{value}</span>
+      )
+    },
+    { key: 'policyNumber', header: 'Policy Number' },
+    { key: 'validUntil', header: 'Valid Until' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
+  ];
+
+  const totalCreditLimit = customers.reduce((sum, customer) => {
+    return sum + parseFloat(customer.creditLimit.replace(/,/g, ''));
+  }, 0);
+
+  const totalUtilized = customers.reduce((sum, customer) => {
+    return sum + parseFloat(customer.utilized.replace(/,/g, ''));
+  }, 0);
+
+  const totalOverdue = customers.reduce((sum, customer) => {
+    return sum + parseFloat(customer.overdue.replace(/,/g, ''));
+  }, 0);
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader 
-        title="Finance Credit Management"
-        description="Comprehensive credit risk management and customer credit analysis"
-        voiceIntroduction="Welcome to Finance Credit Management. Monitor customer credit limits, assess credit risks, and manage collections."
-      />
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mr-4"
+          onClick={() => navigate('/finance')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <PageHeader
+          title="Credit Management"
+          description="Manage customer credit limits, risk assessment, and collections"
+          voiceIntroduction="Welcome to Credit Management. Monitor customer credit limits, assess risk, and manage collections effectively."
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600 mr-3" />
+              <DollarSign className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€2.75M</p>
-                <p className="text-xs text-muted-foreground">Total Credit Exposure</p>
+                <p className="text-2xl font-bold">€{(totalCreditLimit / 1000000).toFixed(1)}M</p>
+                <p className="text-xs text-muted-foreground">Total Credit Limit</p>
               </div>
             </div>
           </CardContent>
@@ -57,10 +330,10 @@ const FinanceCreditManagement: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+              <TrendingUp className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€3.25M</p>
-                <p className="text-xs text-muted-foreground">Available Credit</p>
+                <p className="text-2xl font-bold">€{(totalUtilized / 1000000).toFixed(1)}M</p>
+                <p className="text-xs text-muted-foreground">Credit Utilized</p>
               </div>
             </div>
           </CardContent>
@@ -68,10 +341,10 @@ const FinanceCreditManagement: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-orange-600 mr-3" />
+              <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€210K</p>
-                <p className="text-xs text-muted-foreground">Overdue Amount</p>
+                <p className="text-2xl font-bold">€{totalOverdue.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Total Overdue</p>
               </div>
             </div>
           </CardContent>
@@ -79,10 +352,10 @@ const FinanceCreditManagement: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Clock className="h-8 w-8 text-purple-600 mr-3" />
+              <Users className="h-8 w-8 text-purple-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">4</p>
-                <p className="text-xs text-muted-foreground">Pending Reviews</p>
+                <p className="text-2xl font-bold">{customers.length}</p>
+                <p className="text-xs text-muted-foreground">Active Customers</p>
               </div>
             </div>
           </CardContent>
@@ -90,333 +363,376 @@ const FinanceCreditManagement: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="customers">Customer Credit</TabsTrigger>
-          <TabsTrigger value="requests">Credit Requests</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="customers">Credit Customers</TabsTrigger>
+          <TabsTrigger value="applications">Credit Applications</TabsTrigger>
           <TabsTrigger value="collections">Collections</TabsTrigger>
-          <TabsTrigger value="analysis">Risk Analysis</TabsTrigger>
+          <TabsTrigger value="insurance">Credit Insurance</TabsTrigger>
+          <TabsTrigger value="reporting">Credit Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="customers" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Customer Credit Portfolio</CardTitle>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Customer
-                </Button>
+                <CardTitle>Credit Customers</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Customer
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Credit Customer</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="customerName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Customer Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="creditLimit"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Credit Limit</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} type="number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="riskRating"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Risk Rating</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select rating" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="AAA">AAA</SelectItem>
+                                      <SelectItem value="AA+">AA+</SelectItem>
+                                      <SelectItem value="AA">AA</SelectItem>
+                                      <SelectItem value="A">A</SelectItem>
+                                      <SelectItem value="BBB+">BBB+</SelectItem>
+                                      <SelectItem value="BBB">BBB</SelectItem>
+                                      <SelectItem value="BB">BB</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="paymentTerms"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Payment Terms</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select terms" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="30 days">30 days</SelectItem>
+                                      <SelectItem value="45 days">45 days</SelectItem>
+                                      <SelectItem value="60 days">60 days</SelectItem>
+                                      <SelectItem value="90 days">90 days</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="currency"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Currency</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select currency" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="EUR">EUR</SelectItem>
+                                      <SelectItem value="USD">USD</SelectItem>
+                                      <SelectItem value="GBP">GBP</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">Add Customer</Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search customers..." className="pl-8" />
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Credit Limit</TableHead>
-                      <TableHead>Current Exposure</TableHead>
-                      <TableHead>Credit Rating</TableHead>
-                      <TableHead>Utilization</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers.map((customer) => (
-                      <TableRow key={customer.id}>
-                        <TableCell className="font-medium">{customer.id}</TableCell>
-                        <TableCell>{customer.name}</TableCell>
-                        <TableCell>{customer.creditLimit}</TableCell>
-                        <TableCell>{customer.exposure}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{customer.rating}</Badge>
-                        </TableCell>
-                        <TableCell>{customer.utilization}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            customer.status === 'Good' ? 'outline' :
-                            customer.status === 'Watch' ? 'secondary' : 'destructive'
-                          }>
-                            {customer.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Review</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={customerColumns} data={customers} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="requests" className="space-y-4">
+        <TabsContent value="applications" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Credit Limit Requests</CardTitle>
+                <CardTitle>Credit Applications</CardTitle>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Request
+                  New Application
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Request ID</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Requested Amount</TableHead>
-                      <TableHead>Purpose</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Submitted Date</TableHead>
-                      <TableHead>Reviewer</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {creditRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.id}</TableCell>
-                        <TableCell>{request.customer}</TableCell>
-                        <TableCell>{request.amount}</TableCell>
-                        <TableCell>{request.purpose}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            request.status === 'Approved' ? 'outline' :
-                            request.status === 'Rejected' ? 'destructive' : 'secondary'
-                          }>
-                            {request.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{request.submittedDate}</TableCell>
-                        <TableCell>{request.reviewer}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Process</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={applicationColumns} data={creditApplications} />
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Credit Scoring</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Automated credit scoring and risk assessment.
-                </p>
-                <Button className="w-full">Run Credit Score</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Analyze customer financial statements and ratios.
-                </p>
-                <Button className="w-full">Analyze Financials</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>External Credit Check</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Perform external credit bureau checks.
-                </p>
-                <Button className="w-full">Check Credit Bureau</Button>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
         <TabsContent value="collections" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Overdue Accounts</CardTitle>
+                <CardTitle>Collections Management</CardTitle>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  Bulk Action
+                  New Collection Case
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Overdue Amount</TableHead>
-                      <TableHead>Days Past Due</TableHead>
-                      <TableHead>Last Contact</TableHead>
-                      <TableHead>Next Action</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {overdueAccounts.map((account, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{account.customer}</TableCell>
-                        <TableCell className="text-red-600">{account.amount}</TableCell>
-                        <TableCell>{account.daysPastDue}</TableCell>
-                        <TableCell>{account.lastContact}</TableCell>
-                        <TableCell>{account.nextAction}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            account.priority === 'Critical' ? 'destructive' :
-                            account.priority === 'High' ? 'secondary' :
-                            account.priority === 'Medium' ? 'outline' : 'outline'
-                          }>
-                            {account.priority}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Contact</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={collectionColumns} data={collections} />
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dunning Process</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Automated dunning letters and escalation.
-                </p>
-                <Button className="w-full">Configure Dunning</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Plans</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Create and manage customer payment plans.
-                </p>
-                <Button className="w-full">Create Payment Plan</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Legal Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Track legal proceedings and collection activities.
-                </p>
-                <Button className="w-full">Manage Legal Cases</Button>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
-        <TabsContent value="analysis" className="space-y-4">
+        <TabsContent value="insurance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Credit Insurance Policies</CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Policy
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable columns={insuranceColumns} data={insurancePolicies} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reporting" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Portfolio Risk Analysis</CardTitle>
+                <CardTitle>Credit Risk Report</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Analyze overall credit portfolio risk and concentration.
+                  Comprehensive credit risk analysis and exposure reports.
                 </p>
                 <Button className="w-full">Generate Risk Report</Button>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Credit Loss Provisioning</CardTitle>
+                <CardTitle>Collections Report</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Calculate expected credit losses and provisions.
+                  Detailed collections performance and aging analysis.
                 </p>
-                <Button className="w-full">Calculate Provisions</Button>
+                <Button className="w-full">Generate Collections Report</Button>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Industry Analysis</CardTitle>
+                <CardTitle>Credit Utilization</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Analyze credit risk by industry and sector.
+                  Credit limit utilization and availability analysis.
                 </p>
-                <Button className="w-full">View Industry Risk</Button>
+                <Button className="w-full">Generate Utilization Report</Button>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Stress Testing</CardTitle>
+                <CardTitle>DSO Analysis</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Perform stress tests on credit portfolio.
+                  Days sales outstanding trends and customer analysis.
                 </p>
-                <Button className="w-full">Run Stress Test</Button>
+                <Button className="w-full">Generate DSO Report</Button>
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Risk Dashboard</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">2.1%</p>
-                  <p className="text-sm text-muted-foreground">Default Rate</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">€125K</p>
-                  <p className="text-sm text-muted-foreground">Credit Loss Provision</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">A-</p>
-                  <p className="text-sm text-muted-foreground">Avg Credit Rating</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-600">84.6%</p>
-                  <p className="text-sm text-muted-foreground">Portfolio Utilization</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Credit Customer</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="customerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="creditLimit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Credit Limit</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="riskRating"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Risk Rating</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select rating" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AAA">AAA</SelectItem>
+                          <SelectItem value="AA+">AA+</SelectItem>
+                          <SelectItem value="AA">AA</SelectItem>
+                          <SelectItem value="A">A</SelectItem>
+                          <SelectItem value="BBB+">BBB+</SelectItem>
+                          <SelectItem value="BBB">BBB</SelectItem>
+                          <SelectItem value="BB">BB</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="paymentTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Terms</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select terms" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="30 days">30 days</SelectItem>
+                          <SelectItem value="45 days">45 days</SelectItem>
+                          <SelectItem value="60 days">60 days</SelectItem>
+                          <SelectItem value="90 days">90 days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Customer</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
