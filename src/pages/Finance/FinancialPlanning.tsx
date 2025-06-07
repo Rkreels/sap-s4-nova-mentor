@@ -1,45 +1,302 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Search, Plus, TrendingUp, Calculator, Target, Calendar } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Badge } from '../../components/ui/badge';
-import PageHeader from '../../components/page/PageHeader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Download, Filter, Target, DollarSign, TrendingUp, BarChart } from 'lucide-react';
+import PageHeader from '../../components/page/PageHeader';
+import DataTable, { Column } from '../../components/data/DataTable';
+import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../components/ui/form';
+import { useForm } from 'react-hook-form';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 
 const FinancialPlanning: React.FC = () => {
+  const navigate = useNavigate();
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('budgets');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState(null);
 
-  const budgets = [
-    { id: 'BGT-2025', name: 'Annual Budget 2025', status: 'Draft', version: '1.0', owner: 'Finance Team', lastModified: '2024-05-20', amount: '€15.2M' },
-    { id: 'BGT-2024', name: 'Annual Budget 2024', status: 'Approved', version: '3.2', owner: 'Finance Team', lastModified: '2024-12-15', amount: '€14.8M' },
-    { id: 'FCT-Q3-24', name: 'Q3 2024 Forecast', status: 'Active', version: '2.1', owner: 'Planning Team', lastModified: '2024-05-18', amount: '€3.7M' },
-    { id: 'FCT-Q4-24', name: 'Q4 2024 Forecast', status: 'Review', version: '1.5', owner: 'Planning Team', lastModified: '2024-05-15', amount: '€4.1M' },
+  const form = useForm({
+    defaultValues: {
+      budgetName: '',
+      period: '',
+      version: '',
+      department: '',
+      amount: '',
+      currency: 'USD'
+    }
+  });
+
+  React.useEffect(() => {
+    if (isEnabled) {
+      speak('You are now in Financial Planning. Here you can manage budgets, forecasts, and strategic financial planning activities.');
+    }
+  }, [isEnabled, speak]);
+
+  const [budgets, setBudgets] = useState([
+    { 
+      id: 'BUD-001',
+      budgetName: 'Annual Operating Budget 2024',
+      period: '2024',
+      version: 'V1.2',
+      department: 'Corporate',
+      totalAmount: 5000000,
+      approvedAmount: 4800000,
+      variance: 200000,
+      status: 'Approved',
+      owner: 'CFO Office'
+    },
+    { 
+      id: 'BUD-002',
+      budgetName: 'Marketing Budget Q3-Q4',
+      period: '2024-Q3/Q4',
+      version: 'V2.0',
+      department: 'Marketing',
+      totalAmount: 800000,
+      approvedAmount: 750000,
+      variance: 50000,
+      status: 'In Review',
+      owner: 'Marketing Director'
+    },
+    { 
+      id: 'BUD-003',
+      budgetName: 'IT Infrastructure Budget',
+      period: '2024',
+      version: 'V1.0',
+      department: 'IT',
+      totalAmount: 1200000,
+      approvedAmount: 1200000,
+      variance: 0,
+      status: 'Approved',
+      owner: 'IT Director'
+    }
+  ]);
+
+  const [forecasts, setForecasts] = useState([
+    { id: 'FC-001', scenario: 'Base Case', period: '2024-Q3', revenue: 1250000, expenses: 950000, profit: 300000, margin: 24.0, confidence: 85 },
+    { id: 'FC-002', scenario: 'Optimistic', period: '2024-Q3', revenue: 1400000, expenses: 1000000, profit: 400000, margin: 28.6, confidence: 65 },
+    { id: 'FC-003', scenario: 'Conservative', period: '2024-Q3', revenue: 1100000, expenses: 900000, profit: 200000, margin: 18.2, confidence: 90 },
+    { id: 'FC-004', scenario: 'Base Case', period: '2024-Q4', revenue: 1350000, expenses: 1020000, profit: 330000, margin: 24.4, confidence: 75 }
+  ]);
+
+  const [planning, setPlanning] = useState([
+    { id: 'PL-001', initiative: 'Digital Transformation', category: 'Strategic', budget: 2000000, timeline: '18 months', roi: 15.5, status: 'Planning', priority: 'High' },
+    { id: 'PL-002', initiative: 'Market Expansion', category: 'Growth', budget: 1500000, timeline: '12 months', roi: 22.3, status: 'Approved', priority: 'High' },
+    { id: 'PL-003', initiative: 'Cost Optimization', category: 'Efficiency', budget: 500000, timeline: '6 months', roi: 18.0, status: 'In Progress', priority: 'Medium' },
+    { id: 'PL-004', initiative: 'Product Development', category: 'Innovation', budget: 3000000, timeline: '24 months', roi: 12.8, status: 'Planning', priority: 'High' }
+  ]);
+
+  const handleCreate = (data: any) => {
+    const newBudget = {
+      id: `BUD-${String(budgets.length + 1).padStart(3, '0')}`,
+      budgetName: data.budgetName,
+      period: data.period,
+      version: data.version,
+      department: data.department,
+      totalAmount: parseFloat(data.amount),
+      approvedAmount: 0,
+      variance: parseFloat(data.amount),
+      status: 'Draft',
+      owner: 'Current User'
+    };
+    setBudgets([...budgets, newBudget]);
+    setIsCreateDialogOpen(false);
+    form.reset();
+  };
+
+  const handleEdit = (budget: any) => {
+    setSelectedBudget(budget);
+    form.reset({
+      budgetName: budget.budgetName,
+      period: budget.period,
+      version: budget.version,
+      department: budget.department,
+      amount: budget.totalAmount.toString(),
+      currency: 'USD'
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = (data: any) => {
+    setBudgets(budgets.map(b => 
+      b.id === selectedBudget?.id 
+        ? { 
+            ...b, 
+            budgetName: data.budgetName,
+            period: data.period,
+            version: data.version,
+            department: data.department,
+            totalAmount: parseFloat(data.amount),
+            variance: parseFloat(data.amount) - b.approvedAmount
+          } 
+        : b
+    ));
+    setIsEditDialogOpen(false);
+    setSelectedBudget(null);
+  };
+
+  const handleDelete = (id: string) => {
+    setBudgets(budgets.filter(b => b.id !== id));
+  };
+
+  const budgetColumns: Column[] = [
+    { key: 'budgetName', header: 'Budget Name' },
+    { key: 'period', header: 'Period' },
+    { key: 'version', header: 'Version' },
+    { key: 'department', header: 'Department' },
+    { 
+      key: 'totalAmount', 
+      header: 'Total Amount',
+      render: (value) => `$${(value / 1000000).toFixed(1)}M`
+    },
+    { 
+      key: 'approvedAmount', 
+      header: 'Approved Amount',
+      render: (value) => `$${(value / 1000000).toFixed(1)}M`
+    },
+    { key: 'owner', header: 'Owner' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={
+          value === 'Approved' ? 'default' : 
+          value === 'In Review' ? 'secondary' : 'outline'
+        }>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
-  const scenarios = [
-    { name: 'Best Case', probability: '15%', revenue: '€16.8M', costs: '€12.1M', profit: '€4.7M', roi: '32%' },
-    { name: 'Most Likely', probability: '60%', revenue: '€15.2M', costs: '€11.4M', profit: '€3.8M', roi: '28%' },
-    { name: 'Worst Case', probability: '25%', revenue: '€13.5M', costs: '€11.0M', profit: '€2.5M', roi: '19%' },
+  const forecastColumns: Column[] = [
+    { key: 'scenario', header: 'Scenario' },
+    { key: 'period', header: 'Period' },
+    { 
+      key: 'revenue', 
+      header: 'Revenue',
+      render: (value) => `$${(value / 1000000).toFixed(1)}M`
+    },
+    { 
+      key: 'expenses', 
+      header: 'Expenses',
+      render: (value) => `$${(value / 1000000).toFixed(1)}M`
+    },
+    { 
+      key: 'profit', 
+      header: 'Profit',
+      render: (value) => `$${(value / 1000).toFixed(0)}K`
+    },
+    { 
+      key: 'margin', 
+      header: 'Margin %',
+      render: (value) => `${value.toFixed(1)}%`
+    },
+    { 
+      key: 'confidence', 
+      header: 'Confidence',
+      render: (value) => `${value}%`
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
-  const kpis = [
-    { name: 'Revenue Growth', target: '12%', actual: '8.5%', variance: '-3.5%', trend: 'down' },
-    { name: 'EBITDA Margin', target: '25%', actual: '27.2%', variance: '+2.2%', trend: 'up' },
-    { name: 'Cash Flow', target: '€2.5M', actual: '€2.8M', variance: '+€0.3M', trend: 'up' },
-    { name: 'ROI', target: '18%', actual: '21.5%', variance: '+3.5%', trend: 'up' },
+  const planningColumns: Column[] = [
+    { key: 'initiative', header: 'Initiative' },
+    { key: 'category', header: 'Category' },
+    { 
+      key: 'budget', 
+      header: 'Budget',
+      render: (value) => `$${(value / 1000000).toFixed(1)}M`
+    },
+    { key: 'timeline', header: 'Timeline' },
+    { 
+      key: 'roi', 
+      header: 'Expected ROI',
+      render: (value) => `${value.toFixed(1)}%`
+    },
+    { 
+      key: 'priority', 
+      header: 'Priority',
+      render: (value) => (
+        <Badge variant={
+          value === 'High' ? 'destructive' : 
+          value === 'Medium' ? 'secondary' : 'outline'
+        }>
+          {value}
+        </Badge>
+      )
+    },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={
+          value === 'Approved' ? 'default' : 
+          value === 'In Progress' ? 'secondary' : 'outline'
+        }>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader 
-        title="Financial Planning"
-        description="Budget planning, forecasting, and scenario analysis"
-        voiceIntroduction="Welcome to Financial Planning. Create budgets, forecasts, and perform scenario analysis for strategic planning."
-      />
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mr-4"
+          onClick={() => navigate('/finance')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <PageHeader
+          title="Financial Planning"
+          description="Manage budgets, forecasts, and strategic financial planning activities"
+          voiceIntroduction="Welcome to Financial Planning. Manage your budgets, forecasts, and strategic initiatives."
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -47,8 +304,8 @@ const FinancialPlanning: React.FC = () => {
             <div className="flex items-center">
               <Target className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€15.2M</p>
-                <p className="text-xs text-muted-foreground">2025 Budget</p>
+                <p className="text-2xl font-bold">{budgets.length}</p>
+                <p className="text-xs text-muted-foreground">Active Budgets</p>
               </div>
             </div>
           </CardContent>
@@ -56,10 +313,10 @@ const FinancialPlanning: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-600 mr-3" />
+              <DollarSign className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€14.1M</p>
-                <p className="text-xs text-muted-foreground">Current Forecast</p>
+                <p className="text-2xl font-bold">$7.0M</p>
+                <p className="text-xs text-muted-foreground">Total Budget</p>
               </div>
             </div>
           </CardContent>
@@ -67,10 +324,10 @@ const FinancialPlanning: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Calculator className="h-8 w-8 text-purple-600 mr-3" />
+              <TrendingUp className="h-8 w-8 text-purple-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">7.2%</p>
-                <p className="text-xs text-muted-foreground">Budget Variance</p>
+                <p className="text-2xl font-bold">$6.75M</p>
+                <p className="text-xs text-muted-foreground">Approved Budget</p>
               </div>
             </div>
           </CardContent>
@@ -78,10 +335,10 @@ const FinancialPlanning: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-orange-600 mr-3" />
+              <BarChart className="h-8 w-8 text-orange-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">Q3</p>
-                <p className="text-xs text-muted-foreground">Planning Cycle</p>
+                <p className="text-2xl font-bold">24.0%</p>
+                <p className="text-xs text-muted-foreground">Forecast Margin</p>
               </div>
             </div>
           </CardContent>
@@ -91,286 +348,340 @@ const FinancialPlanning: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="budgets">Budget Management</TabsTrigger>
-          <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
-          <TabsTrigger value="scenarios">Scenario Planning</TabsTrigger>
-          <TabsTrigger value="kpis">KPI Tracking</TabsTrigger>
+          <TabsTrigger value="forecasts">Financial Forecasting</TabsTrigger>
+          <TabsTrigger value="planning">Strategic Planning</TabsTrigger>
+          <TabsTrigger value="analytics">Planning Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="budgets" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Budget Plans</CardTitle>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Budget
-                </Button>
+                <CardTitle>Budget Management</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filter
+                  </Button>
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Budget
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Budget</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="budgetName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="period"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget Period</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select period" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="2024">2024 (Annual)</SelectItem>
+                                    <SelectItem value="2024-Q1">2024 Q1</SelectItem>
+                                    <SelectItem value="2024-Q2">2024 Q2</SelectItem>
+                                    <SelectItem value="2024-Q3">2024 Q3</SelectItem>
+                                    <SelectItem value="2024-Q4">2024 Q4</SelectItem>
+                                    <SelectItem value="2025">2025 (Annual)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="version"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Version</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., V1.0" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="department"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Department</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select department" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Corporate">Corporate</SelectItem>
+                                    <SelectItem value="Finance">Finance</SelectItem>
+                                    <SelectItem value="Marketing">Marketing</SelectItem>
+                                    <SelectItem value="Sales">Sales</SelectItem>
+                                    <SelectItem value="IT">IT</SelectItem>
+                                    <SelectItem value="Operations">Operations</SelectItem>
+                                    <SelectItem value="HR">HR</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget Amount</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">Create Budget</Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search budgets..." className="pl-8" />
-                </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="review">Under Review</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Budget ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Version</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Last Modified</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {budgets.map((budget) => (
-                      <TableRow key={budget.id}>
-                        <TableCell className="font-medium">{budget.id}</TableCell>
-                        <TableCell>{budget.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            budget.status === 'Approved' ? 'outline' :
-                            budget.status === 'Active' ? 'default' :
-                            budget.status === 'Review' ? 'secondary' : 'outline'
-                          }>
-                            {budget.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{budget.version}</TableCell>
-                        <TableCell>{budget.owner}</TableCell>
-                        <TableCell>{budget.amount}</TableCell>
-                        <TableCell>{budget.lastModified}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Edit</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={budgetColumns} data={budgets} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="forecasting" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rolling Forecasts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Create and maintain rolling 12-month forecasts.
-                </p>
-                <Button className="w-full">Create Forecast</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Driver-Based Planning</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Build forecasts based on business drivers.
-                </p>
-                <Button className="w-full">Configure Drivers</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Demand Planning</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Forecast customer demand and revenue.
-                </p>
-                <Button className="w-full">Plan Demand</Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Forecast Accuracy</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">92%</p>
-                  <p className="text-sm text-muted-foreground">Revenue Accuracy</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">88%</p>
-                  <p className="text-sm text-muted-foreground">Cost Accuracy</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">90%</p>
-                  <p className="text-sm text-muted-foreground">Overall Accuracy</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="scenarios" className="space-y-4">
+        <TabsContent value="forecasts" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Scenario Analysis</CardTitle>
+                <CardTitle>Financial Forecasts</CardTitle>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Scenario
+                  New Forecast
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Scenario</TableHead>
-                      <TableHead>Probability</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Costs</TableHead>
-                      <TableHead>Profit</TableHead>
-                      <TableHead>ROI</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {scenarios.map((scenario, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{scenario.name}</TableCell>
-                        <TableCell>{scenario.probability}</TableCell>
-                        <TableCell>{scenario.revenue}</TableCell>
-                        <TableCell>{scenario.costs}</TableCell>
-                        <TableCell className="text-green-600">{scenario.profit}</TableCell>
-                        <TableCell>{scenario.roi}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Analyze</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={forecastColumns} data={forecasts} />
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sensitivity Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Analyze how changes in key variables affect outcomes.
-                </p>
-                <Button className="w-full">Run Sensitivity Analysis</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Monte Carlo Simulation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Run probabilistic simulations for risk assessment.
-                </p>
-                <Button className="w-full">Run Simulation</Button>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
-        <TabsContent value="kpis" className="space-y-4">
+        <TabsContent value="planning" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Key Performance Indicators</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>Strategic Initiatives</CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Initiative
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>KPI</TableHead>
-                      <TableHead>Target</TableHead>
-                      <TableHead>Actual</TableHead>
-                      <TableHead>Variance</TableHead>
-                      <TableHead>Trend</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {kpis.map((kpi, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{kpi.name}</TableCell>
-                        <TableCell>{kpi.target}</TableCell>
-                        <TableCell>{kpi.actual}</TableCell>
-                        <TableCell className={kpi.variance.startsWith('+') ? 'text-green-600' : 'text-red-600'}>
-                          {kpi.variance}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <TrendingUp className={`h-4 w-4 ${kpi.trend === 'up' ? 'text-green-600' : 'text-red-600'}`} />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Details</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={planningColumns} data={planning} />
             </CardContent>
           </Card>
+        </TabsContent>
 
+        <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Performance Dashboard</CardTitle>
+                <CardTitle>Budget Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Interactive dashboard with real-time KPIs.
-                </p>
-                <Button className="w-full">View Dashboard</Button>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Total Planned Budget</span>
+                    <span className="font-semibold">$7.0M</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Approved Budget</span>
+                    <span className="font-semibold text-green-600">$6.75M</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Approval Rate</span>
+                    <span className="font-semibold">96.4%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Budget Variance</span>
+                    <span className="font-semibold text-red-600">$250K</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Balanced Scorecard</CardTitle>
+                <CardTitle>Forecast Accuracy</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Strategic performance measurement framework.
-                </p>
-                <Button className="w-full">View Scorecard</Button>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Revenue Forecast Accuracy</span>
+                    <span className="font-semibold">92%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Expense Forecast Accuracy</span>
+                    <span className="font-semibold">88%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Profit Forecast Accuracy</span>
+                    <span className="font-semibold">85%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Overall Confidence</span>
+                    <span className="font-semibold text-green-600">79%</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Budget</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="budgetName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="period"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Period</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="2024">2024 (Annual)</SelectItem>
+                        <SelectItem value="2024-Q1">2024 Q1</SelectItem>
+                        <SelectItem value="2024-Q2">2024 Q2</SelectItem>
+                        <SelectItem value="2024-Q3">2024 Q3</SelectItem>
+                        <SelectItem value="2024-Q4">2024 Q4</SelectItem>
+                        <SelectItem value="2025">2025 (Annual)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="version"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Version</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., V1.0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Corporate">Corporate</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
+                        <SelectItem value="Marketing">Marketing</SelectItem>
+                        <SelectItem value="Sales">Sales</SelectItem>
+                        <SelectItem value="IT">IT</SelectItem>
+                        <SelectItem value="Operations">Operations</SelectItem>
+                        <SelectItem value="HR">HR</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Amount</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Budget</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

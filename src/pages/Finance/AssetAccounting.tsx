@@ -1,39 +1,269 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Search, Plus, FileText, Download, Calculator, Building } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Badge } from '../../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { ArrowLeft, Plus, Edit, Trash2, Eye, Download, Filter, Calendar, Building, DollarSign, TrendingDown, BarChart } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
+import DataTable, { Column } from '../../components/data/DataTable';
+import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../components/ui/form';
+import { useForm } from 'react-hook-form';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 
 const AssetAccounting: React.FC = () => {
+  const navigate = useNavigate();
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('assets');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
-  const assets = [
-    { id: 'AST-001', description: 'Server Equipment', class: 'IT Equipment', cost: '€25,000', acquiredDate: '2024-01-15', depreciation: '€5,000', bookValue: '€20,000', status: 'Active' },
-    { id: 'AST-002', description: 'Office Building', class: 'Real Estate', cost: '€500,000', acquiredDate: '2023-06-01', depreciation: '€50,000', bookValue: '€450,000', status: 'Active' },
-    { id: 'AST-003', description: 'Manufacturing Equipment', class: 'Machinery', cost: '€150,000', acquiredDate: '2024-03-10', depreciation: '€15,000', bookValue: '€135,000', status: 'Active' },
-    { id: 'AST-004', description: 'Vehicle Fleet', class: 'Transportation', cost: '€80,000', acquiredDate: '2024-02-20', depreciation: '€12,000', bookValue: '€68,000', status: 'Active' },
-    { id: 'AST-005', description: 'Software Licenses', class: 'Intangible', cost: '€30,000', acquiredDate: '2024-04-01', depreciation: '€6,000', bookValue: '€24,000', status: 'Active' },
+  const form = useForm({
+    defaultValues: {
+      assetNumber: '',
+      description: '',
+      assetClass: '',
+      acquisitionValue: '',
+      usefulLife: '',
+      depreciationMethod: '',
+      costCenter: ''
+    }
+  });
+
+  React.useEffect(() => {
+    if (isEnabled) {
+      speak('You are now in Asset Accounting. Here you can manage fixed assets, depreciation, and asset lifecycle.');
+    }
+  }, [isEnabled, speak]);
+
+  const [assets, setAssets] = useState([
+    { 
+      id: 'AS-001',
+      assetNumber: 'EQ-001',
+      description: 'Manufacturing Equipment A',
+      assetClass: 'Machinery',
+      acquisitionValue: 250000,
+      acquisitionDate: '2023-01-15',
+      usefulLife: 10,
+      depreciationMethod: 'Straight Line',
+      accumulatedDepreciation: 25000,
+      bookValue: 225000,
+      status: 'Active',
+      costCenter: 'Production'
+    },
+    { 
+      id: 'AS-002',
+      assetNumber: 'IT-001',
+      description: 'Server Infrastructure',
+      assetClass: 'IT Equipment',
+      acquisitionValue: 150000,
+      acquisitionDate: '2022-06-01',
+      usefulLife: 5,
+      depreciationMethod: 'Straight Line',
+      accumulatedDepreciation: 60000,
+      bookValue: 90000,
+      status: 'Active',
+      costCenter: 'IT'
+    },
+    { 
+      id: 'AS-003',
+      assetNumber: 'VH-001',
+      description: 'Delivery Truck Fleet',
+      assetClass: 'Vehicles',
+      acquisitionValue: 85000,
+      acquisitionDate: '2021-03-10',
+      usefulLife: 8,
+      depreciationMethod: 'Declining Balance',
+      accumulatedDepreciation: 35000,
+      bookValue: 50000,
+      status: 'Active',
+      costCenter: 'Logistics'
+    }
+  ]);
+
+  const [depreciation, setDepreciation] = useState([
+    { id: 'DEP-001', period: '2024-05', assetNumber: 'EQ-001', depreciationAmount: 2083.33, method: 'Straight Line', status: 'Posted' },
+    { id: 'DEP-002', period: '2024-05', assetNumber: 'IT-001', depreciationAmount: 2500.00, method: 'Straight Line', status: 'Posted' },
+    { id: 'DEP-003', period: '2024-05', assetNumber: 'VH-001', depreciationAmount: 850.00, method: 'Declining Balance', status: 'Posted' },
+    { id: 'DEP-004', period: '2024-06', assetNumber: 'EQ-001', depreciationAmount: 2083.33, method: 'Straight Line', status: 'Calculated' }
+  ]);
+
+  const [transactions, setTransactions] = useState([
+    { id: 'TXN-001', date: '2024-05-20', assetNumber: 'EQ-001', transactionType: 'Acquisition', amount: 250000, description: 'Initial Purchase' },
+    { id: 'TXN-002', date: '2024-05-15', assetNumber: 'IT-001', transactionType: 'Depreciation', amount: -2500, description: 'Monthly Depreciation' },
+    { id: 'TXN-003', date: '2024-05-10', assetNumber: 'VH-001', transactionType: 'Maintenance', amount: 1500, description: 'Engine Repair' },
+    { id: 'TXN-004', date: '2024-05-05', assetNumber: 'EQ-001', transactionType: 'Depreciation', amount: -2083.33, description: 'Monthly Depreciation' }
+  ]);
+
+  const handleCreate = (data: any) => {
+    const newAsset = {
+      id: `AS-${String(assets.length + 1).padStart(3, '0')}`,
+      assetNumber: data.assetNumber,
+      description: data.description,
+      assetClass: data.assetClass,
+      acquisitionValue: parseFloat(data.acquisitionValue),
+      acquisitionDate: new Date().toISOString().split('T')[0],
+      usefulLife: parseInt(data.usefulLife),
+      depreciationMethod: data.depreciationMethod,
+      accumulatedDepreciation: 0,
+      bookValue: parseFloat(data.acquisitionValue),
+      status: 'Active',
+      costCenter: data.costCenter
+    };
+    setAssets([...assets, newAsset]);
+    setIsCreateDialogOpen(false);
+    form.reset();
+  };
+
+  const handleEdit = (asset: any) => {
+    setSelectedAsset(asset);
+    form.reset({
+      assetNumber: asset.assetNumber,
+      description: asset.description,
+      assetClass: asset.assetClass,
+      acquisitionValue: asset.acquisitionValue.toString(),
+      usefulLife: asset.usefulLife.toString(),
+      depreciationMethod: asset.depreciationMethod,
+      costCenter: asset.costCenter
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = (data: any) => {
+    setAssets(assets.map(a => 
+      a.id === selectedAsset?.id 
+        ? { 
+            ...a, 
+            assetNumber: data.assetNumber,
+            description: data.description,
+            assetClass: data.assetClass,
+            acquisitionValue: parseFloat(data.acquisitionValue),
+            usefulLife: parseInt(data.usefulLife),
+            depreciationMethod: data.depreciationMethod,
+            costCenter: data.costCenter,
+            bookValue: parseFloat(data.acquisitionValue) - a.accumulatedDepreciation
+          } 
+        : a
+    ));
+    setIsEditDialogOpen(false);
+    setSelectedAsset(null);
+  };
+
+  const handleDelete = (id: string) => {
+    setAssets(assets.filter(a => a.id !== id));
+  };
+
+  const assetColumns: Column[] = [
+    { key: 'assetNumber', header: 'Asset Number' },
+    { key: 'description', header: 'Description' },
+    { key: 'assetClass', header: 'Asset Class' },
+    { 
+      key: 'acquisitionValue', 
+      header: 'Acquisition Value',
+      render: (value) => `$${value.toLocaleString()}`
+    },
+    { 
+      key: 'bookValue', 
+      header: 'Book Value',
+      render: (value) => `$${value.toLocaleString()}`
+    },
+    { key: 'usefulLife', header: 'Useful Life (Years)' },
+    { key: 'depreciationMethod', header: 'Depreciation Method' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
-  const depreciationRuns = [
-    { period: '2024-05', status: 'Completed', assets: 125, amount: '€45,600', date: '2024-05-31' },
-    { period: '2024-04', status: 'Completed', assets: 123, amount: '€44,200', date: '2024-04-30' },
-    { period: '2024-03', status: 'Completed', assets: 120, amount: '€43,800', date: '2024-03-31' },
-    { period: '2024-02', status: 'Completed', assets: 118, amount: '€42,900', date: '2024-02-29' },
+  const depreciationColumns: Column[] = [
+    { key: 'period', header: 'Period' },
+    { key: 'assetNumber', header: 'Asset Number' },
+    { 
+      key: 'depreciationAmount', 
+      header: 'Depreciation Amount',
+      render: (value) => `$${value.toLocaleString()}`
+    },
+    { key: 'method', header: 'Method' },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value) => (
+        <Badge variant={value === 'Posted' ? 'default' : 'secondary'}>{value}</Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
+  ];
+
+  const transactionColumns: Column[] = [
+    { key: 'date', header: 'Transaction Date' },
+    { key: 'assetNumber', header: 'Asset Number' },
+    { key: 'transactionType', header: 'Transaction Type' },
+    { 
+      key: 'amount', 
+      header: 'Amount',
+      render: (value) => `$${value.toLocaleString()}`
+    },
+    { key: 'description', header: 'Description' },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="flex space-x-1">
+          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+        </div>
+      )
+    }
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader 
-        title="Asset Accounting"
-        description="Manage fixed assets, depreciation, and asset lifecycle"
-        voiceIntroduction="Welcome to Asset Accounting. Manage your organization's fixed assets, track depreciation, and handle asset lifecycle processes."
-      />
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mr-4"
+          onClick={() => navigate('/finance')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <PageHeader
+          title="Asset Accounting"
+          description="Manage fixed assets, depreciation, and asset lifecycle"
+          voiceIntroduction="Welcome to Asset Accounting. Manage your organization's fixed assets and depreciation."
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
@@ -41,8 +271,8 @@ const AssetAccounting: React.FC = () => {
             <div className="flex items-center">
               <Building className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€1.2M</p>
-                <p className="text-xs text-muted-foreground">Total Asset Value</p>
+                <p className="text-2xl font-bold">{assets.length}</p>
+                <p className="text-xs text-muted-foreground">Total Assets</p>
               </div>
             </div>
           </CardContent>
@@ -50,10 +280,10 @@ const AssetAccounting: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Calculator className="h-8 w-8 text-green-600 mr-3" />
+              <DollarSign className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">€156K</p>
-                <p className="text-xs text-muted-foreground">YTD Depreciation</p>
+                <p className="text-2xl font-bold">$485K</p>
+                <p className="text-xs text-muted-foreground">Total Acquisition Value</p>
               </div>
             </div>
           </CardContent>
@@ -61,10 +291,10 @@ const AssetAccounting: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <FileText className="h-8 w-8 text-purple-600 mr-3" />
+              <TrendingDown className="h-8 w-8 text-red-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">125</p>
-                <p className="text-xs text-muted-foreground">Active Assets</p>
+                <p className="text-2xl font-bold">$120K</p>
+                <p className="text-xs text-muted-foreground">Accumulated Depreciation</p>
               </div>
             </div>
           </CardContent>
@@ -72,12 +302,10 @@ const AssetAccounting: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-orange-600 font-bold">12</span>
-              </div>
+              <BarChart className="h-8 w-8 text-purple-600 mr-3" />
               <div>
-                <p className="text-2xl font-bold">12</p>
-                <p className="text-xs text-muted-foreground">Pending Retirements</p>
+                <p className="text-2xl font-bold">$365K</p>
+                <p className="text-xs text-muted-foreground">Net Book Value</p>
               </div>
             </div>
           </CardContent>
@@ -86,73 +314,171 @@ const AssetAccounting: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="assets">Asset Master</TabsTrigger>
+          <TabsTrigger value="assets">Asset Management</TabsTrigger>
           <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="reports">Reports & Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="assets" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Asset Master Data</CardTitle>
+                <CardTitle>Fixed Assets</CardTitle>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filter
                   </Button>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Asset
-                  </Button>
+                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Asset
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Asset</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="assetNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Asset Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="assetClass"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Asset Class</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select asset class" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Machinery">Machinery</SelectItem>
+                                    <SelectItem value="IT Equipment">IT Equipment</SelectItem>
+                                    <SelectItem value="Vehicles">Vehicles</SelectItem>
+                                    <SelectItem value="Building">Building</SelectItem>
+                                    <SelectItem value="Furniture">Furniture</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acquisitionValue"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Acquisition Value</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.01" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="usefulLife"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Useful Life (Years)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="depreciationMethod"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Depreciation Method</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select method" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Straight Line">Straight Line</SelectItem>
+                                    <SelectItem value="Declining Balance">Declining Balance</SelectItem>
+                                    <SelectItem value="Units of Production">Units of Production</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="costCenter"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Cost Center</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select cost center" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Production">Production</SelectItem>
+                                    <SelectItem value="IT">IT</SelectItem>
+                                    <SelectItem value="Logistics">Logistics</SelectItem>
+                                    <SelectItem value="Administration">Administration</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">Create Asset</Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search assets..." className="pl-8" />
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Asset ID</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Asset Class</TableHead>
-                      <TableHead>Acquisition Cost</TableHead>
-                      <TableHead>Acquired Date</TableHead>
-                      <TableHead>Depreciation</TableHead>
-                      <TableHead>Book Value</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {assets.map((asset) => (
-                      <TableRow key={asset.id}>
-                        <TableCell className="font-medium">{asset.id}</TableCell>
-                        <TableCell>{asset.description}</TableCell>
-                        <TableCell>{asset.class}</TableCell>
-                        <TableCell>{asset.cost}</TableCell>
-                        <TableCell>{asset.acquiredDate}</TableCell>
-                        <TableCell>{asset.depreciation}</TableCell>
-                        <TableCell>{asset.bookValue}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{asset.status}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">View</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={assetColumns} data={assets} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -161,137 +487,226 @@ const AssetAccounting: React.FC = () => {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Depreciation Management</CardTitle>
+                <CardTitle>Depreciation Schedule</CardTitle>
                 <Button size="sm">
-                  <Calculator className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Run Depreciation
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Period</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Assets Processed</TableHead>
-                      <TableHead>Depreciation Amount</TableHead>
-                      <TableHead>Run Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {depreciationRuns.map((run, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{run.period}</TableCell>
-                        <TableCell>
-                          <Badge variant={run.status === 'Completed' ? 'outline' : 'secondary'}>
-                            {run.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{run.assets}</TableCell>
-                        <TableCell>{run.amount}</TableCell>
-                        <TableCell>{run.date}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">Details</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <DataTable columns={depreciationColumns} data={depreciation} />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Acquisitions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Process new asset acquisitions and initial recognition.
-                </p>
-                <Button className="w-full">Create Acquisition</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Transfers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Transfer assets between cost centers or companies.
-                </p>
-                <Button className="w-full">Create Transfer</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Retirements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Process asset disposals and retirements.
-                </p>
-                <Button className="w-full">Create Retirement</Button>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Asset Transactions</CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Transaction
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable columns={transactionColumns} data={transactions} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Asset Balance Sheet</CardTitle>
+                <CardTitle>Asset Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Generate balance sheet asset reports.
-                </p>
-                <Button className="w-full">Generate Report</Button>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Total Acquisition Cost</span>
+                    <span className="font-semibold">$485,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Accumulated Depreciation</span>
+                    <span className="font-semibold">$120,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Net Book Value</span>
+                    <span className="font-semibold text-green-600">$365,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Monthly Depreciation</span>
+                    <span className="font-semibold">$5,433</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Depreciation Reports</CardTitle>
+                <CardTitle>Asset Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  View depreciation schedules and forecasts.
-                </p>
-                <Button className="w-full">View Reports</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Utilization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Analyze asset utilization and performance.
-                </p>
-                <Button className="w-full">View Analysis</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Tax Reports</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Generate tax depreciation reports.
-                </p>
-                <Button className="w-full">Generate Tax Reports</Button>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Machinery</span>
+                    <span className="font-semibold">$225,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>IT Equipment</span>
+                    <span className="font-semibold">$90,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Vehicles</span>
+                    <span className="font-semibold">$50,000</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Asset</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="assetNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asset Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="assetClass"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asset Class</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select asset class" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Machinery">Machinery</SelectItem>
+                        <SelectItem value="IT Equipment">IT Equipment</SelectItem>
+                        <SelectItem value="Vehicles">Vehicles</SelectItem>
+                        <SelectItem value="Building">Building</SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="acquisitionValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Acquisition Value</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="usefulLife"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Useful Life (Years)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="depreciationMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Depreciation Method</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Straight Line">Straight Line</SelectItem>
+                        <SelectItem value="Declining Balance">Declining Balance</SelectItem>
+                        <SelectItem value="Units of Production">Units of Production</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="costCenter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost Center</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cost center" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Production">Production</SelectItem>
+                        <SelectItem value="IT">IT</SelectItem>
+                        <SelectItem value="Logistics">Logistics</SelectItem>
+                        <SelectItem value="Administration">Administration</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Asset</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
