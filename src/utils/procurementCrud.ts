@@ -1,370 +1,244 @@
 
-import { useToast } from '../hooks/use-toast';
-
-export interface CrudOperations<T> {
-  items: T[];
-  loading: boolean;
-  error: string | null;
-  create: (item: Omit<T, 'id'>) => Promise<T>;
-  read: (id: string) => T | undefined;
-  update: (id: string, updates: Partial<T>) => Promise<T>;
-  delete: (id: string) => Promise<boolean>;
-  search: (query: string, fields: (keyof T)[]) => T[];
-  filter: (predicate: (item: T) => boolean) => T[];
-  sort: (field: keyof T, direction: 'asc' | 'desc') => T[];
-  bulkCreate: (items: Omit<T, 'id'>[]) => Promise<T[]>;
-  bulkUpdate: (updates: { id: string; data: Partial<T> }[]) => Promise<T[]>;
-  bulkDelete: (ids: string[]) => Promise<boolean>;
-  export: (format: 'json' | 'csv' | 'excel') => string | Blob;
-  import: (data: any[], format: 'json' | 'csv') => Promise<T[]>;
+// Generic CRUD operations for procurement entities
+export interface BaseEntity {
+  id: string;
+  created?: string;
+  updated?: string;
 }
 
-export function useProcurementCrud<T extends { id: string }>(
-  initialData: T[] = [],
-  entityName: string
-): CrudOperations<T> {
-  const [items, setItems] = React.useState<T[]>(initialData);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const { toast } = useToast();
+export interface CrudOperations<T extends BaseEntity> {
+  create: (data: Omit<T, 'id' | 'created' | 'updated'>) => T;
+  read: (id: string) => T | null;
+  update: (id: string, data: Partial<Omit<T, 'id' | 'created' | 'updated'>>) => T | null;
+  delete: (id: string) => boolean;
+  list: (filters?: Record<string, any>) => T[];
+  search: (query: string, fields: (keyof T)[]) => T[];
+  export: (format: 'json' | 'csv') => string;
+  import: (data: string, format: 'json' | 'csv') => T[];
+}
 
-  const generateId = (): string => {
-    return `${entityName.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
+// In-memory storage for demonstration
+const storage = new Map<string, Map<string, any>>();
 
-  const create = async (item: Omit<T, 'id'>): Promise<T> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      
-      const newItem = {
-        ...item,
-        id: generateId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-      } as T;
-      
-      setItems(prev => [...prev, newItem]);
-      
-      toast({
-        title: `${entityName} Created`,
-        description: `New ${entityName.toLowerCase()} has been successfully created.`,
-      });
-      
-      return newItem;
-    } catch (err) {
-      const errorMessage = `Failed to create ${entityName.toLowerCase()}`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+const getStorage = <T extends BaseEntity>(entityType: string): Map<string, T> => {
+  if (!storage.has(entityType)) {
+    storage.set(entityType, new Map());
+  }
+  return storage.get(entityType) as Map<string, T>;
+};
 
-  const read = (id: string): T | undefined => {
-    return items.find(item => item.id === id);
-  };
-
-  const update = async (id: string, updates: Partial<T>): Promise<T> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const updatedItem = {
-        ...items.find(item => item.id === id),
-        ...updates,
-        updated: new Date().toISOString()
-      } as T;
-      
-      setItems(prev => prev.map(item => 
-        item.id === id ? updatedItem : item
-      ));
-      
-      toast({
-        title: `${entityName} Updated`,
-        description: `${entityName} has been successfully updated.`,
-      });
-      
-      return updatedItem;
-    } catch (err) {
-      const errorMessage = `Failed to update ${entityName.toLowerCase()}`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteItem = async (id: string): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      setItems(prev => prev.filter(item => item.id !== id));
-      
-      toast({
-        title: `${entityName} Deleted`,
-        description: `${entityName} has been successfully removed.`,
-      });
-      
-      return true;
-    } catch (err) {
-      const errorMessage = `Failed to delete ${entityName.toLowerCase()}`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const search = (query: string, fields: (keyof T)[]): T[] => {
-    const lowercaseQuery = query.toLowerCase();
-    return items.filter(item =>
-      fields.some(field => {
-        const value = item[field];
-        return value && value.toString().toLowerCase().includes(lowercaseQuery);
-      })
-    );
-  };
-
-  const filter = (predicate: (item: T) => boolean): T[] => {
-    return items.filter(predicate);
-  };
-
-  const sort = (field: keyof T, direction: 'asc' | 'desc'): T[] => {
-    return [...items].sort((a, b) => {
-      const aVal = a[field];
-      const bVal = b[field];
-      
-      if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-      if (aVal > bVal) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  };
-
-  const bulkCreate = async (newItems: Omit<T, 'id'>[]): Promise<T[]> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const createdItems = newItems.map(item => ({
-        ...item,
-        id: generateId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-      })) as T[];
-      
-      setItems(prev => [...prev, ...createdItems]);
-      
-      toast({
-        title: 'Bulk Create Successful',
-        description: `${createdItems.length} ${entityName.toLowerCase()}s created successfully.`,
-      });
-      
-      return createdItems;
-    } catch (err) {
-      const errorMessage = `Failed to create ${entityName.toLowerCase()}s`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const bulkUpdate = async (updates: { id: string; data: Partial<T> }[]): Promise<T[]> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const updatedItems: T[] = [];
-      
-      setItems(prev => prev.map(item => {
-        const update = updates.find(u => u.id === item.id);
-        if (update) {
-          const updatedItem = {
-            ...item,
-            ...update.data,
-            updated: new Date().toISOString()
-          };
-          updatedItems.push(updatedItem);
-          return updatedItem;
-        }
-        return item;
-      }));
-      
-      toast({
-        title: 'Bulk Update Successful',
-        description: `${updatedItems.length} ${entityName.toLowerCase()}s updated successfully.`,
-      });
-      
-      return updatedItems;
-    } catch (err) {
-      const errorMessage = `Failed to update ${entityName.toLowerCase()}s`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const bulkDelete = async (ids: string[]): Promise<boolean> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      setItems(prev => prev.filter(item => !ids.includes(item.id)));
-      
-      toast({
-        title: 'Bulk Delete Successful',
-        description: `${ids.length} ${entityName.toLowerCase()}s deleted successfully.`,
-      });
-      
-      return true;
-    } catch (err) {
-      const errorMessage = `Failed to delete ${entityName.toLowerCase()}s`;
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportData = (format: 'json' | 'csv' | 'excel'): string | Blob => {
-    try {
-      switch (format) {
-        case 'json':
-          return JSON.stringify(items, null, 2);
-        
-        case 'csv':
-          if (items.length === 0) return '';
-          const headers = Object.keys(items[0]).join(',');
-          const rows = items.map(item => 
-            Object.values(item).map(value => 
-              typeof value === 'string' && value.includes(',') 
-                ? `"${value}"` 
-                : value
-            ).join(',')
-          );
-          return [headers, ...rows].join('\n');
-        
-        case 'excel':
-          // For a real implementation, you'd use a library like xlsx
-          const csvData = exportData('csv') as string;
-          return new Blob([csvData], { type: 'application/vnd.ms-excel' });
-        
-        default:
-          throw new Error('Unsupported export format');
-      }
-    } catch (err) {
-      toast({
-        title: 'Export Failed',
-        description: 'Failed to export data',
-        variant: 'destructive',
-      });
-      throw err;
-    }
-  };
-
-  const importData = async (data: any[], format: 'json' | 'csv'): Promise<T[]> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let processedData: Omit<T, 'id'>[];
-      
-      if (format === 'json') {
-        processedData = data;
-      } else if (format === 'csv') {
-        // Process CSV data - this is a simplified implementation
-        processedData = data as Omit<T, 'id'>[];
-      } else {
-        throw new Error('Unsupported import format');
-      }
-      
-      const importedItems = await bulkCreate(processedData);
-      
-      toast({
-        title: 'Import Successful',
-        description: `${importedItems.length} ${entityName.toLowerCase()}s imported successfully.`,
-      });
-      
-      return importedItems;
-    } catch (err) {
-      const errorMessage = `Failed to import ${entityName.toLowerCase()}s`;
-      setError(errorMessage);
-      toast({
-        title: 'Import Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+export const createCrudOperations = <T extends BaseEntity>(entityType: string): CrudOperations<T> => {
+  const entityStorage = getStorage<T>(entityType);
 
   return {
-    items,
-    loading,
-    error,
-    create,
-    read,
-    update,
-    delete: deleteItem,
-    search,
-    filter,
-    sort,
-    bulkCreate,
-    bulkUpdate,
-    bulkDelete,
-    export: exportData,
-    import: importData
+    create: (data: Omit<T, 'id' | 'created' | 'updated'>): T => {
+      const id = `${entityType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const timestamp = new Date().toISOString();
+      
+      const newEntity = {
+        ...data,
+        id,
+        created: timestamp,
+        updated: timestamp
+      } as T;
+      
+      entityStorage.set(id, newEntity);
+      return newEntity;
+    },
+
+    read: (id: string): T | null => {
+      return entityStorage.get(id) || null;
+    },
+
+    update: (id: string, data: Partial<Omit<T, 'id' | 'created' | 'updated'>>): T | null => {
+      const existing = entityStorage.get(id);
+      if (!existing) return null;
+
+      const updated = {
+        ...existing,
+        ...data,
+        updated: new Date().toISOString()
+      } as T;
+
+      entityStorage.set(id, updated);
+      return updated;
+    },
+
+    delete: (id: string): boolean => {
+      return entityStorage.delete(id);
+    },
+
+    list: (filters?: Record<string, any>): T[] => {
+      let entities = Array.from(entityStorage.values());
+
+      if (filters) {
+        entities = entities.filter(entity => {
+          return Object.entries(filters).every(([key, value]) => {
+            if (value === null || value === undefined || value === '') return true;
+            const entityValue = (entity as any)[key];
+            
+            if (typeof value === 'string') {
+              return entityValue?.toString().toLowerCase().includes(value.toLowerCase());
+            }
+            return entityValue === value;
+          });
+        });
+      }
+
+      return entities;
+    },
+
+    search: (query: string, fields: (keyof T)[]): T[] => {
+      if (!query.trim()) return Array.from(entityStorage.values());
+
+      const searchTerm = query.toLowerCase();
+      return Array.from(entityStorage.values()).filter(entity => {
+        return fields.some(field => {
+          const value = entity[field];
+          return value?.toString().toLowerCase().includes(searchTerm);
+        });
+      });
+    },
+
+    export: (format: 'json' | 'csv'): string => {
+      const entities = Array.from(entityStorage.values());
+      
+      if (format === 'json') {
+        return JSON.stringify(entities, null, 2);
+      } else {
+        if (entities.length === 0) return '';
+        
+        const headers = Object.keys(entities[0]).join(',');
+        const rows = entities.map(entity => 
+          Object.values(entity).map(value => 
+            typeof value === 'string' && value.includes(',') ? `"${value}"` : value
+          ).join(',')
+        );
+        
+        return [headers, ...rows].join('\n');
+      }
+    },
+
+    import: (data: string, format: 'json' | 'csv'): T[] => {
+      try {
+        let importedData: any[];
+        
+        if (format === 'json') {
+          importedData = JSON.parse(data);
+        } else {
+          const lines = data.trim().split('\n');
+          if (lines.length < 2) return [];
+          
+          const headers = lines[0].split(',');
+          importedData = lines.slice(1).map(line => {
+            const values = line.split(',');
+            const obj: any = {};
+            headers.forEach((header, index) => {
+              obj[header] = values[index]?.replace(/^"|"$/g, ''); // Remove quotes
+            });
+            return obj;
+          });
+        }
+
+        const createdEntities: T[] = [];
+        importedData.forEach(item => {
+          if (item && typeof item === 'object') {
+            // Remove id, created, updated to let create method handle them
+            const { id, created, updated, ...cleanData } = item;
+            const newEntity = createCrudOperations<T>(entityType).create(cleanData);
+            createdEntities.push(newEntity);
+          }
+        });
+
+        return createdEntities;
+      } catch (error) {
+        console.error('Import failed:', error);
+        return [];
+      }
+    }
   };
+};
+
+// Utility functions for common operations
+export const validateEntity = <T extends BaseEntity>(
+  entity: Partial<T>, 
+  requiredFields: (keyof T)[]
+): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  requiredFields.forEach(field => {
+    if (!entity[field]) {
+      errors.push(`${String(field)} is required`);
+    }
+  });
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const sanitizeInput = (input: string): string => {
+  return input.trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+};
+
+export const formatCurrency = (amount: number, currency = 'USD'): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency
+  }).format(amount);
+};
+
+export const formatDate = (date: string | Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(new Date(date));
+};
+
+// Pre-defined entity interfaces for procurement
+export interface Supplier extends BaseEntity {
+  name: string;
+  category: string;
+  status: 'active' | 'inactive' | 'pending';
+  email: string;
+  phone: string;
+  address: string;
+  rating: number;
+  totalOrders: number;
+  totalSpend: number;
 }
 
-// React import for useState
-import React from 'react';
+export interface PurchaseOrder extends BaseEntity {
+  orderNumber: string;
+  supplier: string;
+  amount: number;
+  currency: string;
+  status: 'draft' | 'sent' | 'confirmed' | 'delivered' | 'cancelled';
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }>;
+  deliveryDate: string;
+  requestedBy: string;
+}
+
+export interface RFQ extends BaseEntity {
+  rfqNumber: string;
+  title: string;
+  description: string;
+  status: 'draft' | 'published' | 'closed' | 'awarded';
+  suppliers: string[];
+  responses: number;
+  deadline: string;
+  estimatedValue: number;
+  category: string;
+}
+
+// Create instances for each entity type
+export const supplierCrud = createCrudOperations<Supplier>('supplier');
+export const purchaseOrderCrud = createCrudOperations<PurchaseOrder>('purchaseOrder');
+export const rfqCrud = createCrudOperations<RFQ>('rfq');

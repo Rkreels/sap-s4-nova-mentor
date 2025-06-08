@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -69,7 +68,7 @@ const WorkflowManager: React.FC<WorkflowManagerProps> = ({
   const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowInstance | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'comment'>('approve');
+  const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
   const { toast } = useToast();
 
