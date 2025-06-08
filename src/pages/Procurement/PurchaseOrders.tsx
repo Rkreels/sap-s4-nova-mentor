@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -134,12 +133,12 @@ const PurchaseOrders: React.FC = () => {
       header: 'Status',
       filterable: true,
       filterOptions: [
-        { label: 'Draft', value: 'draft' },
-        { label: 'Sent', value: 'sent' },
-        { label: 'Acknowledged', value: 'acknowledged' },
-        { label: 'In Transit', value: 'in-transit' },
-        { label: 'Delivered', value: 'delivered' },
-        { label: 'Completed', value: 'completed' }
+        { label: 'Draft', value: 'Draft' },
+        { label: 'Sent', value: 'Sent' },
+        { label: 'Acknowledged', value: 'Acknowledged' },
+        { label: 'In Transit', value: 'In Transit' },
+        { label: 'Delivered', value: 'Delivered' },
+        { label: 'Completed', value: 'Completed' }
       ],
       render: (value: string) => (
         <Badge className={getStatusColor(value)}>
