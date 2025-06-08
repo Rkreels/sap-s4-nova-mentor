@@ -152,20 +152,20 @@ const SupplierManagement: React.FC = () => {
   const columns: EnhancedColumn[] = [
     { key: 'name', header: 'Supplier Name', sortable: true, searchable: true },
     { key: 'category', header: 'Category', sortable: true, filterable: true, filterOptions: [
-      { label: 'Technology', value: 'Technology' },
-      { label: 'Office Supplies', value: 'Office Supplies' },
-      { label: 'Safety Equipment', value: 'Safety Equipment' },
-      { label: 'Logistics', value: 'Logistics' }
+      { label: 'Technology', value: 'technology' },
+      { label: 'Office Supplies', value: 'office-supplies' },
+      { label: 'Safety Equipment', value: 'safety-equipment' },
+      { label: 'Logistics', value: 'logistics' }
     ]},
     { 
       key: 'status', 
       header: 'Status',
       filterable: true,
       filterOptions: [
-        { label: 'Active', value: 'Active' },
-        { label: 'Inactive', value: 'Inactive' },
-        { label: 'Pending', value: 'Pending' },
-        { label: 'Blocked', value: 'Blocked' }
+        { label: 'Active', value: 'active' },
+        { label: 'Inactive', value: 'inactive' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Blocked', value: 'blocked' }
       ],
       render: (value: string) => (
         <Badge className={getStatusColor(value)}>
@@ -202,9 +202,9 @@ const SupplierManagement: React.FC = () => {
       header: 'Risk Level',
       filterable: true,
       filterOptions: [
-        { label: 'Low', value: 'Low' },
-        { label: 'Medium', value: 'Medium' },
-        { label: 'High', value: 'High' }
+        { label: 'Low', value: 'low' },
+        { label: 'Medium', value: 'medium' },
+        { label: 'High', value: 'high' }
       ],
       render: (value: string) => (
         <Badge className={getRiskColor(value)}>
