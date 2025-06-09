@@ -5,48 +5,26 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { ArrowLeft, Plus, FileText, Send, Users, Clock, TrendingUp } from 'lucide-react';
+import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
-import PageHeader from '../../components/page/PageHeader';
-import DataTable from '../../components/data/DataTable';
-import { ArrowLeft, Plus, Edit, Eye, Send, FileText, Download, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { Input } from '../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Label } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
 import { useToast } from '../../hooks/use-toast';
 
 interface RFQ {
   id: string;
   rfqNumber: string;
   title: string;
-  description: string;
   category: string;
-  requestDate: string;
-  dueDate: string;
-  status: 'Draft' | 'Sent' | 'Under Evaluation' | 'Awarded' | 'Cancelled';
-  vendorCount: number;
-  responseCount: number;
+  status: 'Draft' | 'Published' | 'Response Period' | 'Evaluation' | 'Awarded' | 'Closed';
+  publishDate: string;
+  responseDeadline: string;
+  totalSuppliers: number;
+  responsesReceived: number;
   estimatedValue: number;
   currency: string;
-  requestor: string;
-  department: string;
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  specifications: string;
-  terms: string;
-}
-
-interface RFQResponse {
-  id: string;
-  rfqId: string;
-  vendorName: string;
-  submitDate: string;
-  totalPrice: number;
-  deliveryTime: string;
-  validityPeriod: string;
-  status: 'Submitted' | 'Under Review' | 'Accepted' | 'Rejected';
-  score: number;
+  buyer: string;
 }
 
 const RFQManagement: React.FC = () => {
@@ -55,313 +33,138 @@ const RFQManagement: React.FC = () => {
   const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('rfqs');
   const [rfqs, setRfqs] = useState<RFQ[]>([]);
-  const [responses, setResponses] = useState<RFQResponse[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedRFQ, setSelectedRFQ] = useState<RFQ | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to RFQ Management. Create, manage, and evaluate Request for Quotations from suppliers.');
+      speak('Welcome to RFQ Management. Request quotes from suppliers and manage bidding processes.');
     }
   }, [isEnabled, speak]);
 
-  // Sample data
   useEffect(() => {
     const sampleRFQs: RFQ[] = [
       {
         id: 'rfq-001',
         rfqNumber: 'RFQ-2025-001',
-        title: 'Electronic Components Package',
-        description: 'High-capacity server memory and circuit boards for data center expansion',
-        category: 'Electronics',
-        requestDate: '2025-01-20',
-        dueDate: '2025-02-10',
-        status: 'Sent',
-        vendorCount: 5,
-        responseCount: 3,
-        estimatedValue: 150000,
+        title: 'IT Infrastructure Equipment',
+        category: 'Technology',
+        status: 'Response Period',
+        publishDate: '2025-01-20',
+        responseDeadline: '2025-02-05',
+        totalSuppliers: 8,
+        responsesReceived: 5,
+        estimatedValue: 250000,
         currency: 'USD',
-        requestor: 'John Smith',
-        department: 'IT',
-        priority: 'High',
-        specifications: 'DDR4 32GB modules, enterprise-grade circuit boards',
-        terms: 'Net 30, FOB destination'
+        buyer: 'John Smith'
       },
       {
         id: 'rfq-002',
         rfqNumber: 'RFQ-2025-002',
-        title: 'Office Furniture Procurement',
-        description: 'Ergonomic office chairs and desks for new office setup',
-        category: 'Office Supplies',
-        requestDate: '2025-01-22',
-        dueDate: '2025-02-15',
-        status: 'Draft',
-        vendorCount: 3,
-        responseCount: 0,
+        title: 'Office Furniture Supply',
+        category: 'Furniture',
+        status: 'Evaluation',
+        publishDate: '2025-01-15',
+        responseDeadline: '2025-01-30',
+        totalSuppliers: 6,
+        responsesReceived: 6,
         estimatedValue: 75000,
         currency: 'USD',
-        requestor: 'Sarah Johnson',
-        department: 'Facilities',
-        priority: 'Medium',
-        specifications: 'Adjustable height desks, lumbar support chairs',
-        terms: 'Net 45, delivery included'
-      },
-      {
-        id: 'rfq-003',
-        rfqNumber: 'RFQ-2025-003',
-        title: 'Manufacturing Equipment',
-        description: 'Industrial machinery for production line upgrade',
-        category: 'Machinery',
-        requestDate: '2025-01-18',
-        dueDate: '2025-02-05',
-        status: 'Under Evaluation',
-        vendorCount: 4,
-        responseCount: 4,
-        estimatedValue: 500000,
-        currency: 'USD',
-        requestor: 'Mike Wilson',
-        department: 'Manufacturing',
-        priority: 'Critical',
-        specifications: 'Automated assembly line equipment with IoT capabilities',
-        terms: 'Net 60, installation included'
+        buyer: 'Sarah Wilson'
       }
     ];
-
-    const sampleResponses: RFQResponse[] = [
-      {
-        id: 'resp-001',
-        rfqId: 'rfq-001',
-        vendorName: 'Tech Components Inc.',
-        submitDate: '2025-01-25',
-        totalPrice: 142000,
-        deliveryTime: '14 days',
-        validityPeriod: '30 days',
-        status: 'Under Review',
-        score: 95
-      },
-      {
-        id: 'resp-002',
-        rfqId: 'rfq-001',
-        vendorName: 'Global Electronics Ltd.',
-        submitDate: '2025-01-26',
-        totalPrice: 155000,
-        deliveryTime: '10 days',
-        validityPeriod: '45 days',
-        status: 'Under Review',
-        score: 88
-      },
-      {
-        id: 'resp-003',
-        rfqId: 'rfq-003',
-        vendorName: 'Industrial Solutions',
-        submitDate: '2025-01-30',
-        totalPrice: 475000,
-        deliveryTime: '45 days',
-        validityPeriod: '60 days',
-        status: 'Accepted',
-        score: 92
-      }
-    ];
-
     setRfqs(sampleRFQs);
-    setResponses(sampleResponses);
   }, []);
 
-  const filteredRFQs = rfqs.filter(rfq => {
-    const matchesSearch = rfq.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rfq.rfqNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rfq.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || rfq.status.toLowerCase().replace(' ', '') === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
-
-  const handleCreateRFQ = () => {
-    setSelectedRFQ(null);
-    setIsEditing(false);
-    setIsDialogOpen(true);
+  const getStatusColor = (status: string) => {
+    const colors = {
+      'Draft': 'bg-gray-100 text-gray-800',
+      'Published': 'bg-blue-100 text-blue-800',
+      'Response Period': 'bg-yellow-100 text-yellow-800',
+      'Evaluation': 'bg-orange-100 text-orange-800',
+      'Awarded': 'bg-green-100 text-green-800',
+      'Closed': 'bg-red-100 text-red-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleEditRFQ = (rfq: RFQ) => {
-    setSelectedRFQ(rfq);
-    setIsEditing(true);
-    setIsDialogOpen(true);
-  };
-
-  const handleDeleteRFQ = (rfqId: string) => {
-    setRfqs(prev => prev.filter(r => r.id !== rfqId));
-    toast({
-      title: 'RFQ Deleted',
-      description: 'RFQ has been successfully removed.',
-    });
-  };
-
-  const handleSendRFQ = (rfqId: string) => {
-    setRfqs(prev => prev.map(r => 
-      r.id === rfqId ? { ...r, status: 'Sent' as const } : r
-    ));
-    toast({
-      title: 'RFQ Sent',
-      description: 'RFQ has been sent to selected vendors.',
-    });
-  };
-
-  const handleSaveRFQ = (rfqData: Partial<RFQ>) => {
-    if (isEditing && selectedRFQ) {
-      setRfqs(prev => prev.map(r => 
-        r.id === selectedRFQ.id ? { ...r, ...rfqData } : r
-      ));
-      toast({
-        title: 'RFQ Updated',
-        description: 'RFQ has been successfully updated.',
-      });
-    } else {
-      const newRFQ: RFQ = {
-        id: `rfq-${rfqs.length + 1}`,
-        rfqNumber: `RFQ-2025-${String(rfqs.length + 1).padStart(3, '0')}`,
-        requestDate: new Date().toISOString().split('T')[0],
-        vendorCount: 0,
-        responseCount: 0,
-        status: 'Draft',
-        currency: 'USD',
-        ...rfqData as RFQ
-      };
-      setRfqs(prev => [...prev, newRFQ]);
-      toast({
-        title: 'RFQ Created',
-        description: 'New RFQ has been successfully created.',
-      });
-    }
-    setIsDialogOpen(false);
-  };
-
-  const rfqColumns = [
-    { key: 'rfqNumber', header: 'RFQ Number' },
-    { key: 'title', header: 'Title' },
-    { key: 'category', header: 'Category' },
-    { key: 'requestDate', header: 'Request Date' },
-    { key: 'dueDate', header: 'Due Date' },
-    { 
-      key: 'priority', 
-      header: 'Priority',
-      render: (value: string) => {
-        const colors = {
-          'Low': 'bg-green-100 text-green-800',
-          'Medium': 'bg-yellow-100 text-yellow-800',
-          'High': 'bg-orange-100 text-orange-800',
-          'Critical': 'bg-red-100 text-red-800'
-        };
-        return (
-          <Badge className={colors[value as keyof typeof colors]}>
-            {value}
-          </Badge>
-        );
-      }
-    },
+  const columns: EnhancedColumn[] = [
+    { key: 'rfqNumber', header: 'RFQ Number', sortable: true, searchable: true },
+    { key: 'title', header: 'Title', searchable: true },
+    { key: 'category', header: 'Category', filterable: true, filterOptions: [
+      { label: 'Technology', value: 'Technology' },
+      { label: 'Furniture', value: 'Furniture' },
+      { label: 'Services', value: 'Services' },
+      { label: 'Manufacturing', value: 'Manufacturing' }
+    ]},
     { 
       key: 'status', 
       header: 'Status',
-      render: (value: string) => {
-        const colors = {
-          'Draft': 'bg-gray-100 text-gray-800',
-          'Sent': 'bg-blue-100 text-blue-800',
-          'Under Evaluation': 'bg-yellow-100 text-yellow-800',
-          'Awarded': 'bg-green-100 text-green-800',
-          'Cancelled': 'bg-red-100 text-red-800'
-        };
-        return (
-          <Badge className={colors[value as keyof typeof colors]}>
-            {value}
-          </Badge>
-        );
-      }
+      filterable: true,
+      filterOptions: [
+        { label: 'Draft', value: 'Draft' },
+        { label: 'Published', value: 'Published' },
+        { label: 'Response Period', value: 'Response Period' },
+        { label: 'Evaluation', value: 'Evaluation' },
+        { label: 'Awarded', value: 'Awarded' },
+        { label: 'Closed', value: 'Closed' }
+      ],
+      render: (value: string) => (
+        <Badge className={getStatusColor(value)}>
+          {value}
+        </Badge>
+      )
     },
+    { key: 'responseDeadline', header: 'Deadline', sortable: true },
     { 
-      key: 'responseCount', 
+      key: 'responsesReceived', 
       header: 'Responses',
-      render: (value: number, row: RFQ) => `${value}/${row.vendorCount}`
+      render: (value: number, row: RFQ) => `${value}/${row.totalSuppliers}`
     },
     { 
       key: 'estimatedValue', 
-      header: 'Estimated Value',
-      render: (value: number, row: RFQ) => `$${value.toLocaleString()} ${row.currency}`
+      header: 'Est. Value',
+      sortable: true,
+      render: (value: number, row: RFQ) => `${row.currency} ${value.toLocaleString()}`
     },
-    { 
-      key: 'actions', 
-      header: 'Actions',
-      render: (_, row: RFQ) => (
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" title="View">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEditRFQ(row)} title="Edit">
-            <Edit className="h-4 w-4" />
-          </Button>
-          {row.status === 'Draft' && (
-            <Button variant="ghost" size="sm" onClick={() => handleSendRFQ(row.id)} title="Send">
-              <Send className="h-4 w-4" />
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" title="Generate Report">
-            <FileText className="h-4 w-4" />
-          </Button>
-        </div>
-      )
-    }
+    { key: 'buyer', header: 'Buyer', searchable: true }
   ];
 
-  const responseColumns = [
-    { key: 'vendorName', header: 'Vendor' },
-    { key: 'submitDate', header: 'Submit Date' },
-    { 
-      key: 'totalPrice', 
-      header: 'Total Price',
-      render: (value: number) => `$${value.toLocaleString()}`
+  const actions: TableAction[] = [
+    {
+      label: 'Publish',
+      icon: <Send className="h-4 w-4" />,
+      onClick: (row: RFQ) => {
+        toast({
+          title: 'Publish RFQ',
+          description: `Publishing RFQ ${row.rfqNumber}`,
+        });
+      },
+      variant: 'default',
+      condition: (row: RFQ) => row.status === 'Draft'
     },
-    { key: 'deliveryTime', header: 'Delivery Time' },
-    { key: 'validityPeriod', header: 'Validity' },
-    { 
-      key: 'score', 
-      header: 'Score',
-      render: (value: number) => (
-        <div className="flex items-center">
-          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full" 
-              style={{ width: `${value}%` }}
-            />
-          </div>
-          <span className="font-medium">{value}</span>
-        </div>
-      )
+    {
+      label: 'Evaluate',
+      icon: <TrendingUp className="h-4 w-4" />,
+      onClick: (row: RFQ) => {
+        toast({
+          title: 'Evaluate Responses',
+          description: `Opening evaluation for ${row.rfqNumber}`,
+        });
+      },
+      variant: 'default',
+      condition: (row: RFQ) => row.status === 'Response Period' && row.responsesReceived > 0
     },
-    { 
-      key: 'status', 
-      header: 'Status',
-      render: (value: string) => {
-        const colors = {
-          'Submitted': 'bg-blue-100 text-blue-800',
-          'Under Review': 'bg-yellow-100 text-yellow-800',
-          'Accepted': 'bg-green-100 text-green-800',
-          'Rejected': 'bg-red-100 text-red-800'
-        };
-        return (
-          <Badge className={colors[value as keyof typeof colors]}>
-            {value}
-          </Badge>
-        );
-      }
+    {
+      label: 'View Details',
+      icon: <FileText className="h-4 w-4" />,
+      onClick: (row: RFQ) => {
+        toast({
+          title: 'View RFQ Details',
+          description: `Opening details for ${row.rfqNumber}`,
+        });
+      },
+      variant: 'ghost'
     }
-  ];
-
-  const rfqMetrics = [
-    { name: 'Active RFQs', value: rfqs.filter(r => r.status === 'Sent' || r.status === 'Under Evaluation').length, change: '+12%' },
-    { name: 'Response Rate', value: '78%', change: '+5%' },
-    { name: 'Avg Cycle Time', value: '18 days', change: '-2 days' },
-    { name: 'Cost Savings', value: '$2.1M', change: '+15%' }
   ];
 
   return (
@@ -377,119 +180,187 @@ const RFQManagement: React.FC = () => {
         </Button>
         <PageHeader
           title="RFQ Management"
-          description="Create, manage, and evaluate Request for Quotations from suppliers"
-          voiceIntroduction="Welcome to RFQ Management."
+          description="Request quotes from suppliers and manage competitive bidding processes"
+          voiceIntroduction="Welcome to RFQ Management for comprehensive quote management."
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {rfqMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div className="text-sm text-muted-foreground">{metric.name}</div>
-              <div className="text-sm text-green-600">{metric.change}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Request for Quotations</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleCreateRFQ}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create RFQ
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{rfqs.length}</div>
+            <div className="text-sm text-muted-foreground">Total RFQs</div>
+            <div className="text-sm text-blue-600">This month</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {rfqs.filter(r => r.status === 'Response Period').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Active RFQs</div>
+            <div className="text-sm text-green-600">Collecting responses</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {rfqs.reduce((sum, r) => sum + r.responsesReceived, 0)}
+            </div>
+            <div className="text-sm text-muted-foreground">Total Responses</div>
+            <div className="text-sm text-purple-600">All RFQs</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              ${rfqs.reduce((sum, r) => sum + r.estimatedValue, 0).toLocaleString()}
+            </div>
+            <div className="text-sm text-muted-foreground">Total Est. Value</div>
+            <div className="text-sm text-orange-600">All active RFQs</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="rfqs">RFQs</TabsTrigger>
-          <TabsTrigger value="responses">Responses</TabsTrigger>
+          <TabsTrigger value="active">Active Bidding</TabsTrigger>
           <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rfqs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>RFQ Portfolio</CardTitle>
+              <CardTitle className="flex justify-between items-center">
+                Request for Quotations
+                <Button onClick={() => toast({ title: 'Create RFQ', description: 'Opening RFQ creation form' })}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create RFQ
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between mb-4">
-                <div className="flex space-x-2">
-                  <Input 
-                    placeholder="Search RFQs..." 
-                    className="w-80"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
-                      <SelectItem value="underevaluation">Under Evaluation</SelectItem>
-                      <SelectItem value="awarded">Awarded</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DataTable columns={rfqColumns} data={filteredRFQs} />
+              <EnhancedDataTable 
+                columns={columns}
+                data={rfqs}
+                actions={actions}
+                searchPlaceholder="Search RFQs by number, title, or category..."
+                exportable={true}
+                refreshable={true}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="responses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vendor Responses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable columns={responseColumns} data={responses} />
-            </CardContent>
-          </Card>
+        <TabsContent value="active" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {rfqs.filter(r => r.status === 'Response Period').map((rfq) => (
+              <Card key={rfq.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    {rfq.title}
+                    <Badge className={getStatusColor(rfq.status)}>
+                      {rfq.status}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>RFQ Number:</span>
+                      <span className="font-medium">{rfq.rfqNumber}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Category:</span>
+                      <span className="font-medium">{rfq.category}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Deadline:</span>
+                      <span className="font-medium">{rfq.responseDeadline}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Responses:</span>
+                      <span className="font-medium">{rfq.responsesReceived}/{rfq.totalSuppliers}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Est. Value:</span>
+                      <span className="font-medium">{rfq.currency} {rfq.estimatedValue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex space-x-2 mt-4">
+                      <Button size="sm">
+                        <Users className="h-4 w-4 mr-2" />
+                        View Responses
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Extend Deadline
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="evaluation" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Response Evaluation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {rfqs.filter(r => r.status === 'Evaluation').map((rfq) => (
+                  <div key={rfq.id} className="p-4 border rounded">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-semibold">{rfq.title}</h4>
+                        <p className="text-sm text-muted-foreground">{rfq.rfqNumber}</p>
+                      </div>
+                      <Badge className={getStatusColor(rfq.status)}>
+                        {rfq.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm mb-3">
+                      {rfq.responsesReceived} responses received from {rfq.totalSuppliers} suppliers
+                    </p>
+                    <div className="flex space-x-2">
+                      <Button size="sm">Compare Responses</Button>
+                      <Button size="sm" variant="outline">Technical Evaluation</Button>
+                      <Button size="sm" variant="outline">Award Contract</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Evaluation Criteria</CardTitle>
+                <CardTitle>RFQ Performance</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span>Price (40%)</span>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '40%' }} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Quality (30%)</span>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '30%' }} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Delivery (20%)</span>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '20%' }} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Service (10%)</span>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '10%' }} />
+                  <div className="p-4 border rounded">
+                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total RFQs:</span>
+                        <span className="font-medium">{rfqs.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Response Rate:</span>
+                        <span className="font-medium">78%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Avg. Suppliers per RFQ:</span>
+                        <span className="font-medium">7.2</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -498,208 +369,35 @@ const RFQManagement: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Award Recommendations</CardTitle>
+                <CardTitle>Category Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {responses
-                    .filter(r => r.status !== 'Rejected')
-                    .sort((a, b) => b.score - a.score)
-                    .slice(0, 3)
-                    .map((response, index) => (
-                      <div key={response.id} className="p-3 border rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium">{response.vendorName}</span>
-                          <Badge className={index === 0 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
-                            {index === 0 ? 'Recommended' : `Rank ${index + 1}`}
-                          </Badge>
+                  {['Technology', 'Furniture', 'Services', 'Manufacturing'].map((category) => {
+                    const count = rfqs.filter(r => r.category === category).length;
+                    const percentage = rfqs.length > 0 ? Math.round((count / rfqs.length) * 100) : 0;
+                    return (
+                      <div key={category} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{category}</span>
+                          <span>{count} ({percentage}%)</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>Price: ${response.totalPrice.toLocaleString()}</div>
-                          <div>Score: {response.score}/100</div>
-                          <div>Delivery: {response.deliveryTime}</div>
-                          <div>Validity: {response.validityPeriod}</div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="templates" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>RFQ Templates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <h3 className="font-medium">IT Equipment Template</h3>
-                  <p className="text-sm text-muted-foreground">For computers, servers, and networking equipment</p>
-                  <div className="mt-2">
-                    <Button variant="outline" size="sm">Use Template</Button>
-                  </div>
-                </div>
-                <div className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <h3 className="font-medium">Office Supplies Template</h3>
-                  <p className="text-sm text-muted-foreground">For furniture, stationery, and office equipment</p>
-                  <div className="mt-2">
-                    <Button variant="outline" size="sm">Use Template</Button>
-                  </div>
-                </div>
-                <div className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <h3 className="font-medium">Services Template</h3>
-                  <p className="text-sm text-muted-foreground">For consulting, maintenance, and professional services</p>
-                  <div className="mt-2">
-                    <Button variant="outline" size="sm">Use Template</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit RFQ' : 'Create New RFQ'}</DialogTitle>
-          </DialogHeader>
-          <RFQForm 
-            rfq={selectedRFQ}
-            onSave={handleSaveRFQ}
-            onCancel={() => setIsDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-};
-
-const RFQForm: React.FC<{
-  rfq: RFQ | null;
-  onSave: (data: Partial<RFQ>) => void;
-  onCancel: () => void;
-}> = ({ rfq, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: rfq?.title || '',
-    description: rfq?.description || '',
-    category: rfq?.category || '',
-    dueDate: rfq?.dueDate || '',
-    estimatedValue: rfq?.estimatedValue || 0,
-    requestor: rfq?.requestor || '',
-    department: rfq?.department || '',
-    priority: rfq?.priority || 'Medium',
-    specifications: rfq?.specifications || '',
-    terms: rfq?.terms || ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="title">RFQ Title</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="category">Category</Label>
-          <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Electronics">Electronics</SelectItem>
-              <SelectItem value="Office Supplies">Office Supplies</SelectItem>
-              <SelectItem value="Machinery">Machinery</SelectItem>
-              <SelectItem value="Services">Services</SelectItem>
-              <SelectItem value="Raw Materials">Raw Materials</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="dueDate">Due Date</Label>
-          <Input
-            id="dueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="estimatedValue">Estimated Value ($)</Label>
-          <Input
-            id="estimatedValue"
-            type="number"
-            value={formData.estimatedValue}
-            onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: Number(e.target.value) }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="requestor">Requestor</Label>
-          <Input
-            id="requestor"
-            value={formData.requestor}
-            onChange={(e) => setFormData(prev => ({ ...prev, requestor: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="priority">Priority</Label>
-          <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value as any }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Low">Low</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Critical">Critical</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="specifications">Specifications</Label>
-        <Textarea
-          id="specifications"
-          value={formData.specifications}
-          onChange={(e) => setFormData(prev => ({ ...prev, specifications: e.target.value }))}
-        />
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          Save RFQ
-        </Button>
-      </div>
-    </form>
   );
 };
 

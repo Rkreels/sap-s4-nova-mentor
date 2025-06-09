@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, Edit, Eye, FileText, CheckCircle, X } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, CheckCircle, XCircle, Clock, Send } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
@@ -18,13 +18,13 @@ interface PurchaseRequisition {
   title: string;
   requestor: string;
   department: string;
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Converted';
   requestDate: string;
   requiredDate: string;
-  status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Converted';
-  totalValue: number;
+  totalAmount: number;
   currency: string;
-  urgency: 'Low' | 'Medium' | 'High' | 'Critical';
-  approver?: string;
+  approver: string;
   items: number;
 }
 
@@ -38,7 +38,7 @@ const PurchaseRequisitions: React.FC = () => {
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Purchase Requisitions. Create and manage internal purchase requests for approval and conversion to purchase orders.');
+      speak('Welcome to Purchase Requisitions. Create and manage internal purchase requests and approval workflows.');
     }
   }, [isEnabled, speak]);
 
@@ -47,46 +47,32 @@ const PurchaseRequisitions: React.FC = () => {
       {
         id: 'pr-001',
         prNumber: 'PR-2025-001',
-        title: 'Office Supplies for Q1',
-        requestor: 'Sarah Johnson',
-        department: 'Finance',
-        requestDate: '2025-01-24',
-        requiredDate: '2025-02-10',
+        title: 'Office Equipment Request',
+        requestor: 'John Smith',
+        department: 'IT Department',
+        priority: 'Medium',
         status: 'Approved',
-        totalValue: 1250,
+        requestDate: '2025-01-20',
+        requiredDate: '2025-02-15',
+        totalAmount: 5500,
         currency: 'USD',
-        urgency: 'Medium',
-        approver: 'John Smith',
-        items: 12
+        approver: 'Sarah Wilson',
+        items: 8
       },
       {
         id: 'pr-002',
         prNumber: 'PR-2025-002',
-        title: 'IT Equipment Upgrade',
-        requestor: 'Mike Wilson',
-        department: 'IT',
-        requestDate: '2025-01-22',
-        requiredDate: '2025-02-05',
-        status: 'Converted',
-        totalValue: 8750,
-        currency: 'USD',
-        urgency: 'High',
-        approver: 'Emma Davis',
-        items: 5
-      },
-      {
-        id: 'pr-003',
-        prNumber: 'PR-2025-003',
-        title: 'Manufacturing Tools',
-        requestor: 'David Brown',
-        department: 'Manufacturing',
-        requestDate: '2025-01-26',
-        requiredDate: '2025-02-15',
+        title: 'Software Licenses',
+        requestor: 'Mike Johnson',
+        department: 'Development',
+        priority: 'High',
         status: 'Submitted',
-        totalValue: 3200,
+        requestDate: '2025-01-25',
+        requiredDate: '2025-02-01',
+        totalAmount: 12000,
         currency: 'USD',
-        urgency: 'Low',
-        items: 8
+        approver: '',
+        items: 5
       }
     ];
     setRequisitions(sampleRequisitions);
@@ -103,14 +89,14 @@ const PurchaseRequisitions: React.FC = () => {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const getUrgencyColor = (urgency: string) => {
+  const getPriorityColor = (priority: string) => {
     const colors = {
-      'Low': 'bg-gray-100 text-gray-800',
+      'Low': 'bg-blue-100 text-blue-800',
       'Medium': 'bg-yellow-100 text-yellow-800',
       'High': 'bg-orange-100 text-orange-800',
-      'Critical': 'bg-red-100 text-red-800'
+      'Urgent': 'bg-red-100 text-red-800'
     };
-    return colors[urgency as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   const columns: EnhancedColumn[] = [
@@ -118,13 +104,27 @@ const PurchaseRequisitions: React.FC = () => {
     { key: 'title', header: 'Title', searchable: true },
     { key: 'requestor', header: 'Requestor', sortable: true, searchable: true },
     { key: 'department', header: 'Department', filterable: true, filterOptions: [
-      { label: 'Finance', value: 'Finance' },
-      { label: 'IT', value: 'IT' },
-      { label: 'Manufacturing', value: 'Manufacturing' },
-      { label: 'HR', value: 'HR' }
+      { label: 'IT Department', value: 'IT Department' },
+      { label: 'Development', value: 'Development' },
+      { label: 'HR', value: 'HR' },
+      { label: 'Finance', value: 'Finance' }
     ]},
-    { key: 'requestDate', header: 'Request Date', sortable: true },
-    { key: 'requiredDate', header: 'Required Date', sortable: true },
+    { 
+      key: 'priority', 
+      header: 'Priority',
+      filterable: true,
+      filterOptions: [
+        { label: 'Low', value: 'Low' },
+        { label: 'Medium', value: 'Medium' },
+        { label: 'High', value: 'High' },
+        { label: 'Urgent', value: 'Urgent' }
+      ],
+      render: (value: string) => (
+        <Badge className={getPriorityColor(value)}>
+          {value}
+        </Badge>
+      )
+    },
     { 
       key: 'status', 
       header: 'Status',
@@ -142,25 +142,10 @@ const PurchaseRequisitions: React.FC = () => {
         </Badge>
       )
     },
+    { key: 'requiredDate', header: 'Required Date', sortable: true },
     { 
-      key: 'urgency', 
-      header: 'Urgency',
-      filterable: true,
-      filterOptions: [
-        { label: 'Low', value: 'Low' },
-        { label: 'Medium', value: 'Medium' },
-        { label: 'High', value: 'High' },
-        { label: 'Critical', value: 'Critical' }
-      ],
-      render: (value: string) => (
-        <Badge className={getUrgencyColor(value)}>
-          {value}
-        </Badge>
-      )
-    },
-    { 
-      key: 'totalValue', 
-      header: 'Total Value',
+      key: 'totalAmount', 
+      header: 'Amount',
       sortable: true,
       render: (value: number, row: PurchaseRequisition) => `${row.currency} ${value.toLocaleString()}`
     }
@@ -168,35 +153,12 @@ const PurchaseRequisitions: React.FC = () => {
 
   const actions: TableAction[] = [
     {
-      label: 'View',
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (row: PurchaseRequisition) => {
-        toast({
-          title: 'View Requisition',
-          description: `Opening details for ${row.prNumber}`,
-        });
-      },
-      variant: 'ghost'
-    },
-    {
-      label: 'Edit',
-      icon: <Edit className="h-4 w-4" />,
-      onClick: (row: PurchaseRequisition) => {
-        toast({
-          title: 'Edit Requisition',
-          description: `Editing ${row.prNumber}`,
-        });
-      },
-      variant: 'ghost',
-      condition: (row: PurchaseRequisition) => row.status === 'Draft'
-    },
-    {
       label: 'Approve',
       icon: <CheckCircle className="h-4 w-4" />,
       onClick: (row: PurchaseRequisition) => {
         toast({
           title: 'Approve Requisition',
-          description: `Approving ${row.prNumber}`,
+          description: `Approving requisition ${row.prNumber}`,
         });
       },
       variant: 'default',
@@ -204,16 +166,27 @@ const PurchaseRequisitions: React.FC = () => {
     },
     {
       label: 'Convert to PO',
-      icon: <FileText className="h-4 w-4" />,
+      icon: <Send className="h-4 w-4" />,
       onClick: (row: PurchaseRequisition) => {
-        navigate('/procurement/purchase-orders');
         toast({
-          title: 'Convert to PO',
-          description: `Converting ${row.prNumber} to Purchase Order`,
+          title: 'Convert to Purchase Order',
+          description: `Converting ${row.prNumber} to purchase order`,
         });
       },
       variant: 'default',
       condition: (row: PurchaseRequisition) => row.status === 'Approved'
+    },
+    {
+      label: 'Reject',
+      icon: <XCircle className="h-4 w-4" />,
+      onClick: (row: PurchaseRequisition) => {
+        toast({
+          title: 'Reject Requisition',
+          description: `Rejecting requisition ${row.prNumber}`,
+        });
+      },
+      variant: 'destructive',
+      condition: (row: PurchaseRequisition) => row.status === 'Submitted'
     }
   ];
 
@@ -230,8 +203,8 @@ const PurchaseRequisitions: React.FC = () => {
         </Button>
         <PageHeader
           title="Purchase Requisitions"
-          description="Create and manage internal purchase requests for approval"
-          voiceIntroduction="Welcome to Purchase Requisitions for internal procurement requests."
+          description="Create and manage internal purchase requests and approval workflows"
+          voiceIntroduction="Welcome to Purchase Requisitions for comprehensive request management."
         />
       </div>
 
@@ -258,25 +231,24 @@ const PurchaseRequisitions: React.FC = () => {
               {requisitions.filter(r => r.status === 'Approved').length}
             </div>
             <div className="text-sm text-muted-foreground">Approved</div>
-            <div className="text-sm text-green-600">Ready for PO</div>
+            <div className="text-sm text-green-600">Ready for conversion</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              ${requisitions.reduce((sum, r) => sum + r.totalValue, 0).toLocaleString()}
+              ${requisitions.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Total Value</div>
-            <div className="text-sm text-green-600">This month</div>
+            <div className="text-sm text-purple-600">All requisitions</div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="requisitions">Requisitions</TabsTrigger>
-          <TabsTrigger value="approvals">Pending Approvals</TabsTrigger>
-          <TabsTrigger value="approved">Ready for PO</TabsTrigger>
+          <TabsTrigger value="approval">Approval Workflow</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -304,15 +276,15 @@ const PurchaseRequisitions: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="approvals" className="space-y-4">
+        <TabsContent value="approval" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {requisitions.filter(r => r.status === 'Submitted').map((requisition) => (
               <Card key={requisition.id}>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center justify-between">
                     {requisition.prNumber}
-                    <Badge className={getUrgencyColor(requisition.urgency)}>
-                      {requisition.urgency}
+                    <Badge className={getPriorityColor(requisition.priority)}>
+                      {requisition.priority}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
@@ -331,11 +303,11 @@ const PurchaseRequisitions: React.FC = () => {
                       <span className="font-medium">{requisition.department}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Value:</span>
-                      <span className="font-medium">{requisition.currency} {requisition.totalValue.toLocaleString()}</span>
+                      <span>Amount:</span>
+                      <span className="font-medium">{requisition.currency} {requisition.totalAmount.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Required By:</span>
+                      <span>Required Date:</span>
                       <span className="font-medium">{requisition.requiredDate}</span>
                     </div>
                     <div className="flex space-x-2 mt-4">
@@ -344,55 +316,12 @@ const PurchaseRequisitions: React.FC = () => {
                         Approve
                       </Button>
                       <Button size="sm" variant="destructive">
-                        <X className="h-4 w-4 mr-2" />
+                        <XCircle className="h-4 w-4 mr-2" />
                         Reject
                       </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="approved" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {requisitions.filter(r => r.status === 'Approved').map((requisition) => (
-              <Card key={requisition.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    {requisition.prNumber}
-                    <Badge className={getStatusColor(requisition.status)}>
-                      {requisition.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>Title:</span>
-                      <span className="font-medium">{requisition.title}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Requestor:</span>
-                      <span className="font-medium">{requisition.requestor}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Value:</span>
-                      <span className="font-medium">{requisition.currency} {requisition.totalValue.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Approved By:</span>
-                      <span className="font-medium">{requisition.approver}</span>
-                    </div>
-                    <div className="flex space-x-2 mt-4">
-                      <Button size="sm" onClick={() => navigate('/procurement/purchase-orders')}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Convert to PO
-                      </Button>
                       <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
+                        <FileText className="h-4 w-4 mr-2" />
+                        Review
                       </Button>
                     </div>
                   </div>
@@ -411,7 +340,7 @@ const PurchaseRequisitions: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-4 border rounded">
-                    <h4 className="font-semibold mb-2">Processing Statistics</h4>
+                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Total Requisitions:</span>
@@ -419,11 +348,11 @@ const PurchaseRequisitions: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Approval Rate:</span>
-                        <span className="font-medium">87%</span>
+                        <span className="font-medium">85%</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Avg. Processing Time:</span>
-                        <span className="font-medium">2.3 days</span>
+                        <span className="font-medium">3.2 days</span>
                       </div>
                     </div>
                   </div>
