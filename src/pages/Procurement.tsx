@@ -236,46 +236,53 @@ const Procurement: React.FC = () => {
           isVoiceAssistantEnabled={isEnabled}
           description="Determine optimal suppliers for materials and services."
           icon={<span className="text-xl">🎯</span>}
-          examples="Source Determination helps identify the best suppliers based on criteria like price, quality, delivery time, and strategic relationships."
+          examples="Source Determination helps identify the best suppliers based on criteria like price, quality, delivery time, and strategic fit."
           onClick={() => handleTileClick('/procurement/source-determination', 'Source Determination')}
         />
       </SAPSection>
 
       <SAPSection 
-        title="Operations & Analytics" 
+        title="Procurement Operations" 
         isVoiceAssistantEnabled={isEnabled}
-        description="Process receipts, verify invoices, and analyze procurement data."
+        description="Handle goods receipt, invoice processing, and payments."
       >
         <SAPTile 
           title="Goods Receipt"
           isVoiceAssistantEnabled={isEnabled}
-          description="Process incoming deliveries and manage inventory receipts."
+          description="Record and verify receipt of goods from purchase orders."
           icon={<Package className="text-xl" />}
-          examples="Goods Receipt processes all incoming deliveries, performs quality checks, updates inventory levels, and triggers payment processes."
+          examples="Goods Receipt processes incoming deliveries, verifies quantities and quality, and updates inventory records automatically."
           onClick={() => handleTileClick('/procurement/goods-receipt', 'Goods Receipt')}
         />
         <SAPTile 
           title="Invoice Verification"
           isVoiceAssistantEnabled={isEnabled}
-          description="Verify supplier invoices and process payments."
+          description="Verify and process supplier invoices for payment."
           icon={<span className="text-xl">💰</span>}
-          examples="Invoice Verification performs three-way matching between purchase orders, goods receipts, and invoices to ensure accurate payments."
+          examples="Invoice Verification matches supplier invoices with purchase orders and goods receipts to ensure accurate payment processing."
           onClick={() => handleTileClick('/procurement/invoice-verification', 'Invoice Verification')}
         />
         <SAPTile 
           title="Bidding & Auctions"
           isVoiceAssistantEnabled={isEnabled}
-          description="Manage competitive bidding and auction processes."
-          icon={<span className="text-xl">🔨</span>}
-          examples="Bidding & Auctions facilitate competitive sourcing through reverse auctions, sealed bids, and multi-round negotiations."
+          description="Manage competitive bidding and reverse auction processes."
+          icon={<span className="text-xl">🏆</span>}
+          examples="Bidding & Auctions enables competitive sourcing through online bidding platforms and reverse auctions to optimize pricing."
           onClick={() => handleTileClick('/procurement/bidding-auctions', 'Bidding & Auctions')}
         />
+      </SAPSection>
+
+      <SAPSection 
+        title="Analytics & Reporting" 
+        isVoiceAssistantEnabled={isEnabled}
+        description="Monitor procurement performance and generate insights."
+      >
         <SAPTile 
           title="Procurement Analytics"
           isVoiceAssistantEnabled={isEnabled}
-          description="Analyze spending patterns, supplier performance, and cost optimization."
+          description="Analyze spending patterns, supplier performance, and cost savings."
           icon={<TrendingUp className="text-xl" />}
-          examples="Procurement Analytics provides insights into spending patterns, supplier performance, cost savings opportunities, and compliance metrics."
+          examples="Procurement Analytics provides dashboards and reports on spending trends, supplier performance metrics, cost savings achievements, and compliance monitoring."
           onClick={() => handleTileClick('/procurement/analytics', 'Procurement Analytics')}
         />
       </SAPSection>

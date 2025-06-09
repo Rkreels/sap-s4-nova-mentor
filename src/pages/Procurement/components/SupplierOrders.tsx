@@ -1,51 +1,136 @@
 
-import React from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../../components/data/EnhancedDataTable';
+import { Plus, Eye, FileText, ShoppingCart } from 'lucide-react';
+import { useToast } from '../../../hooks/use-toast';
 
-// Sample data for supplier orders
-const recentOrders = [
-  { id: "4500012765", date: "05/15/2025", delivery: "06/01/2025", value: "125,000.00 USD", status: "Open", items: 12 },
-  { id: "4500012681", date: "04/22/2025", delivery: "05/05/2025", value: "78,350.00 USD", status: "Delivered", items: 8 },
-  { id: "4500012597", date: "03/18/2025", delivery: "04/01/2025", value: "54,800.00 USD", status: "Delivered", items: 15 },
-  { id: "4500012492", date: "02/25/2025", delivery: "03/10/2025", value: "92,600.00 USD", status: "Delivered", items: 10 },
-  { id: "4500012388", date: "01/12/2025", delivery: "01/28/2025", value: "67,450.00 USD", status: "Delivered", items: 7 }
-];
+interface Order {
+  id: string;
+  orderNumber: string;
+  orderDate: string;
+  deliveryDate: string;
+  status: 'Pending' | 'Delivered' | 'Cancelled' | 'In Transit';
+  totalAmount: number;
+  currency: string;
+  items: number;
+}
 
 const SupplierOrders: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([
+    {
+      id: 'ord-001',
+      orderNumber: 'PO-2025-001',
+      orderDate: '2025-01-15',
+      deliveryDate: '2025-01-22',
+      status: 'Delivered',
+      totalAmount: 15600,
+      currency: 'USD',
+      items: 12
+    },
+    {
+      id: 'ord-002',
+      orderNumber: 'PO-2025-002',
+      orderDate: '2025-01-20',
+      deliveryDate: '2025-01-27',
+      status: 'In Transit',
+      totalAmount: 8900,
+      currency: 'USD',
+      items: 8
+    }
+  ]);
+  const { toast } = useToast();
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      'Pending': 'bg-yellow-100 text-yellow-800',
+      'Delivered': 'bg-green-100 text-green-800',
+      'Cancelled': 'bg-red-100 text-red-800',
+      'In Transit': 'bg-blue-100 text-blue-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const columns: EnhancedColumn[] = [
+    { key: 'orderNumber', header: 'Order Number', sortable: true, searchable: true },
+    { key: 'orderDate', header: 'Order Date', sortable: true },
+    { key: 'deliveryDate', header: 'Delivery Date', sortable: true },
+    { 
+      key: 'status', 
+      header: 'Status',
+      filterable: true,
+      filterOptions: [
+        { label: 'Pending', value: 'Pending' },
+        { label: 'Delivered', value: 'Delivered' },
+        { label: 'Cancelled', value: 'Cancelled' },
+        { label: 'In Transit', value: 'In Transit' }
+      ],
+      render: (value: string) => (
+        <Badge className={getStatusColor(value)}>
+          {value}
+        </Badge>
+      )
+    },
+    { 
+      key: 'totalAmount', 
+      header: 'Total Amount',
+      sortable: true,
+      render: (value: number, row: Order) => `${row.currency} ${value.toLocaleString()}`
+    },
+    { key: 'items', header: 'Items', sortable: true }
+  ];
+
+  const actions: TableAction[] = [
+    {
+      label: 'View',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row: Order) => {
+        toast({
+          title: 'View Order',
+          description: `Opening order details for ${row.orderNumber}`,
+        });
+      },
+      variant: 'ghost'
+    },
+    {
+      label: 'Invoice',
+      icon: <FileText className="h-4 w-4" />,
+      onClick: (row: Order) => {
+        toast({
+          title: 'Generate Invoice',
+          description: `Creating invoice for ${row.orderNumber}`,
+        });
+      },
+      variant: 'outline',
+      condition: (row: Order) => row.status === 'Delivered'
+    }
+  ];
+
   return (
-    <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Recent Purchase Orders</h2>
-          <Button variant="outline" size="sm">View All</Button>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>PO Number</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {recentOrders.slice(0, 3).map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell>{order.value}</TableCell>
-                <TableCell>
-                  <Badge variant={order.status === 'Open' ? 'outline' : 'default'}>
-                    {order.status}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span className="flex items-center">
+            <ShoppingCart className="h-5 w-5 mr-2" />
+            Order History
+          </span>
+          <Button onClick={() => toast({ title: 'Create Order', description: 'Opening purchase order creation form' })}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Order
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <EnhancedDataTable 
+          columns={columns}
+          data={orders}
+          actions={actions}
+          searchPlaceholder="Search orders by number or status..."
+          exportable={true}
+          refreshable={true}
+        />
       </CardContent>
     </Card>
   );

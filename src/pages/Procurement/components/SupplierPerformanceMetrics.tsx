@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { TrendingUp, BarChart, FileText } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
+import { TrendingUp, Calendar, DollarSign, Activity } from 'lucide-react';
 
 interface SupplierPerformanceMetricsProps {
   totalSpend: string;
@@ -9,42 +10,50 @@ interface SupplierPerformanceMetricsProps {
 }
 
 const SupplierPerformanceMetrics: React.FC<SupplierPerformanceMetricsProps> = ({
-  totalSpend, lastOrder
+  totalSpend,
+  lastOrder
 }) => {
   return (
     <Card>
-      <CardContent className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Performance Metrics</h2>
-        <ul className="space-y-3">
-          <li className="flex items-center">
-            <TrendingUp className="h-5 w-5 text-blue-500 mr-3" />
-            <div>
-              <div className="text-sm text-gray-500">Total Spend</div>
-              <div className="font-medium">{totalSpend}</div>
-            </div>
-          </li>
-          <li className="flex items-center">
-            <BarChart className="h-5 w-5 text-green-500 mr-3" />
-            <div>
-              <div className="text-sm text-gray-500">On-Time Delivery</div>
-              <div className="font-medium">92%</div>
-            </div>
-          </li>
-          <li className="flex items-center">
-            <BarChart className="h-5 w-5 text-purple-500 mr-3" />
-            <div>
-              <div className="text-sm text-gray-500">Quality Rating</div>
-              <div className="font-medium">4.8/5.0</div>
-            </div>
-          </li>
-          <li className="flex items-center">
-            <FileText className="h-5 w-5 text-orange-500 mr-3" />
-            <div>
-              <div className="text-sm text-gray-500">Last Order</div>
-              <div className="font-medium">{lastOrder}</div>
-            </div>
-          </li>
-        </ul>
+      <CardHeader>
+        <CardTitle>Performance Metrics</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center p-3 border rounded">
+            <TrendingUp className="h-6 w-6 mx-auto mb-2 text-green-600" />
+            <div className="text-lg font-bold">4.8</div>
+            <div className="text-sm text-muted-foreground">Rating</div>
+          </div>
+          <div className="text-center p-3 border rounded">
+            <Activity className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+            <div className="text-lg font-bold">95%</div>
+            <div className="text-sm text-muted-foreground">On-Time</div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <div className="text-sm text-muted-foreground">Total Spend</div>
+            <div className="font-medium">{totalSpend}</div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <div className="text-sm text-muted-foreground">Last Order</div>
+            <div className="font-medium">{lastOrder}</div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Quality Score</span>
+            <span>98%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-green-600 h-2 rounded-full" style={{ width: '98%' }}></div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
