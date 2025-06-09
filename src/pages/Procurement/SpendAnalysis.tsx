@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -10,7 +9,7 @@ import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import { useToast } from '../../hooks/use-toast';
-import { LineChart, Line, BarChart, Bar, PieChart as RechartsPieChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
 const SpendAnalysis: React.FC = () => {
   const navigate = useNavigate();
