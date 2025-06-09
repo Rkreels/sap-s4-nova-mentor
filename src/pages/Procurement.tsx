@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SAPSection from '../components/SAPSection';
@@ -239,6 +238,14 @@ const Procurement: React.FC = () => {
           examples="Source Determination helps identify the best suppliers based on criteria like price, quality, delivery time, and strategic fit."
           onClick={() => handleTileClick('/procurement/source-determination', 'Source Determination')}
         />
+        <SAPTile 
+          title="Supplier Performance"
+          isVoiceAssistantEnabled={isEnabled}
+          description="Monitor and evaluate supplier performance metrics."
+          icon={<TrendingUp className="text-xl" />}
+          examples="Supplier Performance tracking monitors delivery times, quality scores, cost competitiveness, and overall supplier ratings."
+          onClick={() => handleTileClick('/procurement/supplier-performance', 'Supplier Performance')}
+        />
       </SAPSection>
 
       <SAPSection 
@@ -284,6 +291,22 @@ const Procurement: React.FC = () => {
           icon={<TrendingUp className="text-xl" />}
           examples="Procurement Analytics provides dashboards and reports on spending trends, supplier performance metrics, cost savings achievements, and compliance monitoring."
           onClick={() => handleTileClick('/procurement/analytics', 'Procurement Analytics')}
+        />
+        <SAPTile 
+          title="Spend Analysis"
+          isVoiceAssistantEnabled={isEnabled}
+          description="Analyze procurement spending patterns and identify cost optimization opportunities."
+          icon={<DollarSign className="text-xl" />}
+          examples="Spend Analysis provides insights into spending by category, supplier, and time period to identify cost savings opportunities."
+          onClick={() => handleTileClick('/procurement/spend-analysis', 'Spend Analysis')}
+        />
+        <SAPTile 
+          title="Catalog Management"
+          isVoiceAssistantEnabled={isEnabled}
+          description="Manage product catalogs, pricing, and supplier catalogs."
+          icon={<span className="text-xl">📚</span>}
+          examples="Catalog Management handles all product catalogs, pricing updates, and supplier catalog integration for streamlined procurement."
+          onClick={() => handleTileClick('/procurement/catalog-management', 'Catalog Management')}
         />
       </SAPSection>
     </div>
