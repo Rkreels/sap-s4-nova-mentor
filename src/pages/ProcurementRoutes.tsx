@@ -27,8 +27,8 @@ const ProcurementRoutes: React.FC = () => {
       <Route path="/rfq" element={<RFQManagement />} />
       <Route path="/supplier-management" element={<SupplierManagement />} />
       <Route path="/supplier-management/:supplierId" element={<SupplierDetail />} />
+      <Route path="/suppliers" element={<SupplierManagement />} />
       <Route path="/contract-management" element={<ContractManagement />} />
-      <Route path="/contracts" element={<ContractManagement />} />
       <Route path="/source-determination" element={<SourceDetermination />} />
       <Route path="/source-list" element={<SourceDetermination />} />
       <Route path="/goods-receipt" element={<GoodsReceipt />} />

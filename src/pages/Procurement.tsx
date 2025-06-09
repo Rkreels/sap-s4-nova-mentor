@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SAPSection from '../components/SAPSection';
@@ -215,11 +216,11 @@ const Procurement: React.FC = () => {
         description="Manage supplier relationships, contracts, and performance."
       >
         <SAPTile 
-          title="Supplier Directory"
+          title="Supplier Management"
           isVoiceAssistantEnabled={isEnabled}
           description="Maintain comprehensive supplier database and relationships."
           icon={<Users className="text-xl" />}
-          examples="The Supplier Directory contains all registered suppliers with their contact information, certifications, performance history, and qualification status."
+          examples="The Supplier Management contains all registered suppliers with their contact information, certifications, performance history, and qualification status."
           onClick={() => handleTileClick('/procurement/supplier-management', 'Supplier Management')}
         />
         <SAPTile 
