@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -497,10 +498,12 @@ const SupplierManagement: React.FC = () => {
               <Card key={riskLevel}>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Badge className={getRiskColor(riskLevel)} variant="outline" className="mr-2">
+                    <Badge className={getRiskColor(riskLevel)} variant="outline">
                       {riskLevel} Risk
                     </Badge>
-                    ({suppliers.filter(s => s.riskLevel === riskLevel).length})
+                    <span className="ml-2">
+                      ({suppliers.filter(s => s.riskLevel === riskLevel).length})
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

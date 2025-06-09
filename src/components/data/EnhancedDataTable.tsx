@@ -253,7 +253,7 @@ const EnhancedDataTable: React.FC<EnhancedDataTableProps> = ({
                 <SelectValue placeholder={`Filter ${column.header}`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All {column.header}</SelectItem>
+                <SelectItem value="all">All {column.header}</SelectItem>
                 {column.filterOptions?.map(option => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
