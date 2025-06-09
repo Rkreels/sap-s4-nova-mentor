@@ -218,22 +218,46 @@ const SupplierManagement: React.FC = () => {
     {
       label: 'View',
       icon: <Eye className="h-4 w-4" />,
-      onClick: (row: Supplier) => console.log('View supplier:', row),
+      onClick: (row: Supplier) => {
+        navigate(`/procurement/supplier-management/${row.id}`);
+        toast({
+          title: 'Viewing Supplier',
+          description: `Opening details for ${row.name}`,
+        });
+      },
       variant: 'ghost'
     },
     {
       label: 'Edit',
       icon: <Edit className="h-4 w-4" />,
-      onClick: (row: Supplier) => console.log('Edit supplier:', row),
+      onClick: (row: Supplier) => {
+        toast({
+          title: 'Edit Supplier',
+          description: `Opening edit form for ${row.name}`,
+        });
+      },
       variant: 'ghost'
     },
     {
       label: 'Performance',
       icon: <TrendingUp className="h-4 w-4" />,
-      onClick: (row: Supplier) => console.log('View performance:', row),
+      onClick: (row: Supplier) => {
+        setActiveTab('performance');
+        toast({
+          title: 'Performance View',
+          description: `Viewing performance metrics for ${row.name}`,
+        });
+      },
       variant: 'ghost'
     }
   ];
+
+  const handleAddSupplier = () => {
+    toast({
+      title: 'Add Supplier',
+      description: 'Opening new supplier registration form',
+    });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -312,7 +336,7 @@ const SupplierManagement: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 Supplier Directory
-                <Button>
+                <Button onClick={handleAddSupplier}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Supplier
                 </Button>
@@ -326,6 +350,12 @@ const SupplierManagement: React.FC = () => {
                 searchPlaceholder="Search suppliers by name, contact, or category..."
                 exportable={true}
                 refreshable={true}
+                onRefresh={() => {
+                  toast({
+                    title: 'Refreshing Data',
+                    description: 'Supplier data has been refreshed',
+                  });
+                }}
               />
             </CardContent>
           </Card>

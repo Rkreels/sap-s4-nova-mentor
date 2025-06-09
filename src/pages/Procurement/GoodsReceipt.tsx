@@ -5,37 +5,24 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, Package, CheckCircle, AlertCircle, Search, Filter, Edit, Trash2, Eye, Download, Upload, Truck, Calendar, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Plus, Package, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
-import DataTable from '../../components/data/DataTable';
-import { Input } from '../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Label } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
 import { useToast } from '../../hooks/use-toast';
-import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
-interface GoodsReceipt {
+interface GoodsReceiptItem {
   id: string;
-  grNumber: string;
+  receiptNumber: string;
   poNumber: string;
   supplier: string;
-  deliveryDate: string;
-  receivedDate: string;
-  orderedQty: number;
-  receivedQty: number;
-  status: 'Complete' | 'Partial' | 'Pending' | 'Quality Issue' | 'Rejected';
+  receiptDate: string;
+  status: 'Pending' | 'Partial' | 'Complete' | 'Discrepancy';
+  totalItems: number;
+  receivedItems: number;
   inspector: string;
-  material: string;
-  unit: string;
-  variance: number;
   location: string;
-  batchNumber: string;
-  notes: string;
-  created: string;
 }
 
 const GoodsReceipt: React.FC = () => {
@@ -43,215 +30,114 @@ const GoodsReceipt: React.FC = () => {
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('receipts');
-  const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedReceipt, setSelectedReceipt] = useState<GoodsReceipt | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [receipts, setReceipts] = useState<GoodsReceiptItem[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Goods Receipt. Process and manage incoming deliveries from suppliers.');
+      speak('Welcome to Goods Receipt. Record and verify the receipt of goods from purchase orders.');
     }
   }, [isEnabled, speak]);
 
-  // Sample data
   useEffect(() => {
-    const sampleReceipts: GoodsReceipt[] = [
+    const sampleReceipts: GoodsReceiptItem[] = [
       {
-        id: 'GR-001',
-        grNumber: 'GR-2025-001',
+        id: 'gr-001',
+        receiptNumber: 'GR-2025-001',
         poNumber: 'PO-2025-001',
-        supplier: 'Tech Components Inc.',
-        deliveryDate: '2025-01-20',
-        receivedDate: '2025-01-20',
-        orderedQty: 100,
-        receivedQty: 100,
+        supplier: 'Dell Technologies',
+        receiptDate: '2025-01-26',
         status: 'Complete',
-        inspector: 'John Smith',
-        material: 'Microprocessors',
-        unit: 'PCS',
-        variance: 0,
-        location: 'Warehouse A',
-        batchNumber: 'BATCH001',
-        notes: 'All items received in good condition',
-        created: '2025-01-20'
+        totalItems: 5,
+        receivedItems: 5,
+        inspector: 'Mike Wilson',
+        location: 'Warehouse A'
       },
       {
-        id: 'GR-002',
-        grNumber: 'GR-2025-002',
+        id: 'gr-002',
+        receiptNumber: 'GR-2025-002',
         poNumber: 'PO-2025-002',
-        supplier: 'Office Supplies Ltd.',
-        deliveryDate: '2025-01-22',
-        receivedDate: '2025-01-22',
-        orderedQty: 50,
-        receivedQty: 45,
+        supplier: 'Office Depot Inc.',
+        receiptDate: '2025-01-25',
         status: 'Partial',
-        inspector: 'Maria Garcia',
-        material: 'Office Chairs',
-        unit: 'PCS',
-        variance: -5,
-        location: 'Warehouse B',
-        batchNumber: 'BATCH002',
-        notes: '5 units damaged during transport',
-        created: '2025-01-22'
-      },
-      {
-        id: 'GR-003',
-        grNumber: 'GR-2025-003',
-        poNumber: 'PO-2025-003',
-        supplier: 'Industrial Parts Co.',
-        deliveryDate: '2025-01-25',
-        receivedDate: '',
-        orderedQty: 200,
-        receivedQty: 0,
-        status: 'Pending',
-        inspector: '',
-        material: 'Steel Components',
-        unit: 'KG',
-        variance: 0,
-        location: 'Warehouse C',
-        batchNumber: '',
-        notes: 'Awaiting delivery',
-        created: '2025-01-15'
+        totalItems: 12,
+        receivedItems: 8,
+        inspector: 'Sarah Johnson',
+        location: 'Warehouse B'
       }
     ];
-
-    setTimeout(() => {
-      setReceipts(sampleReceipts);
-      setIsLoading(false);
-    }, 1000);
+    setReceipts(sampleReceipts);
   }, []);
 
-  const filteredReceipts = receipts.filter(receipt => {
-    const matchesSearch = receipt.grNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         receipt.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         receipt.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         receipt.material.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || receipt.status.toLowerCase() === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
-
-  const handleCreateReceipt = () => {
-    setSelectedReceipt(null);
-    setIsEditing(false);
-    setIsDialogOpen(true);
+  const getStatusColor = (status: string) => {
+    const colors = {
+      'Pending': 'bg-yellow-100 text-yellow-800',
+      'Partial': 'bg-blue-100 text-blue-800',
+      'Complete': 'bg-green-100 text-green-800',
+      'Discrepancy': 'bg-red-100 text-red-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleEditReceipt = (receipt: GoodsReceipt) => {
-    setSelectedReceipt(receipt);
-    setIsEditing(true);
-    setIsDialogOpen(true);
-  };
-
-  const handleDeleteReceipt = (receiptId: string) => {
-    setReceipts(prev => prev.filter(r => r.id !== receiptId));
-    toast({
-      title: 'Receipt Deleted',
-      description: 'Goods receipt has been successfully removed.',
-    });
-  };
-
-  const handleSaveReceipt = (receiptData: Partial<GoodsReceipt>) => {
-    if (isEditing && selectedReceipt) {
-      setReceipts(prev => prev.map(r => 
-        r.id === selectedReceipt.id ? { ...r, ...receiptData } : r
-      ));
-      toast({
-        title: 'Receipt Updated',
-        description: 'Goods receipt has been successfully updated.',
-      });
-    } else {
-      const newReceipt: GoodsReceipt = {
-        id: `GR-${String(receipts.length + 1).padStart(3, '0')}`,
-        grNumber: `GR-2025-${String(receipts.length + 1).padStart(3, '0')}`,
-        created: new Date().toISOString().split('T')[0],
-        receivedDate: '',
-        variance: 0,
-        ...receiptData as GoodsReceipt
-      };
-      setReceipts(prev => [...prev, newReceipt]);
-      toast({
-        title: 'Receipt Created',
-        description: 'New goods receipt has been successfully created.',
-      });
-    }
-    setIsDialogOpen(false);
-  };
-
-  const receiptColumns = [
-    { key: 'grNumber', header: 'GR Number' },
-    { key: 'poNumber', header: 'PO Number' },
-    { key: 'supplier', header: 'Supplier' },
-    { key: 'material', header: 'Material' },
-    { key: 'deliveryDate', header: 'Delivery Date' },
-    { key: 'orderedQty', header: 'Ordered Qty' },
-    { key: 'receivedQty', header: 'Received Qty' },
-    { 
-      key: 'variance', 
-      header: 'Variance',
-      render: (value: number) => (
-        <span className={value < 0 ? 'text-red-600' : value > 0 ? 'text-blue-600' : 'text-green-600'}>
-          {value > 0 ? `+${value}` : value}
-        </span>
-      )
-    },
+  const columns: EnhancedColumn[] = [
+    { key: 'receiptNumber', header: 'Receipt #', sortable: true, searchable: true },
+    { key: 'poNumber', header: 'PO Number', sortable: true, searchable: true },
+    { key: 'supplier', header: 'Supplier', sortable: true, searchable: true },
+    { key: 'receiptDate', header: 'Receipt Date', sortable: true },
     { 
       key: 'status', 
       header: 'Status',
-      render: (value: string) => {
-        const colors = {
-          'Complete': 'bg-green-100 text-green-800',
-          'Partial': 'bg-yellow-100 text-yellow-800',
-          'Pending': 'bg-orange-100 text-orange-800',
-          'Quality Issue': 'bg-red-100 text-red-800',
-          'Rejected': 'bg-red-100 text-red-800'
-        };
-        return (
-          <Badge className={colors[value as keyof typeof colors]}>
-            {value}
-          </Badge>
-        );
-      }
+      filterable: true,
+      filterOptions: [
+        { label: 'Pending', value: 'Pending' },
+        { label: 'Partial', value: 'Partial' },
+        { label: 'Complete', value: 'Complete' },
+        { label: 'Discrepancy', value: 'Discrepancy' }
+      ],
+      render: (value: string) => (
+        <Badge className={getStatusColor(value)}>
+          {value}
+        </Badge>
+      )
     },
     { 
-      key: 'actions', 
-      header: 'Actions',
-      render: (_, row: GoodsReceipt) => (
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => handleEditReceipt(row)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDeleteReceipt(row.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      )
-    }
+      key: 'receivedItems', 
+      header: 'Items Received',
+      render: (value: number, row: GoodsReceiptItem) => `${value}/${row.totalItems}`
+    },
+    { key: 'inspector', header: 'Inspector', searchable: true },
+    { key: 'location', header: 'Location', filterable: true, filterOptions: [
+      { label: 'Warehouse A', value: 'Warehouse A' },
+      { label: 'Warehouse B', value: 'Warehouse B' },
+      { label: 'Warehouse C', value: 'Warehouse C' }
+    ]}
   ];
 
-  const receiptMetrics = [
-    { name: 'Today\'s Receipts', value: receipts.filter(r => r.receivedDate === new Date().toISOString().split('T')[0]).length, change: '+12%' },
-    { name: 'Pending Receipts', value: receipts.filter(r => r.status === 'Pending').length, change: '-8%' },
-    { name: 'Quality Issues', value: receipts.filter(r => r.status === 'Quality Issue').length, change: '-15%' },
-    { name: 'On-Time Delivery', value: '94%', change: '+2%' }
-  ];
-
-  const performanceData = receipts.reduce((acc, receipt) => {
-    const month = receipt.receivedDate ? receipt.receivedDate.substring(0, 7) : '';
-    if (month) {
-      acc[month] = acc[month] || { month, complete: 0, partial: 0, issues: 0 };
-      if (receipt.status === 'Complete') acc[month].complete++;
-      else if (receipt.status === 'Partial') acc[month].partial++;
-      else if (receipt.status === 'Quality Issue') acc[month].issues++;
+  const actions: TableAction[] = [
+    {
+      label: 'Complete Receipt',
+      icon: <CheckCircle className="h-4 w-4" />,
+      onClick: (row: GoodsReceiptItem) => {
+        toast({
+          title: 'Complete Receipt',
+          description: `Completing goods receipt ${row.receiptNumber}`,
+        });
+      },
+      variant: 'default',
+      condition: (row: GoodsReceiptItem) => row.status === 'Pending' || row.status === 'Partial'
+    },
+    {
+      label: 'Report Issue',
+      icon: <AlertCircle className="h-4 w-4" />,
+      onClick: (row: GoodsReceiptItem) => {
+        toast({
+          title: 'Report Issue',
+          description: `Reporting discrepancy for ${row.receiptNumber}`,
+        });
+      },
+      variant: 'destructive'
     }
-    return acc;
-  }, {} as Record<string, any>);
-
-  const chartData = Object.values(performanceData);
+  ];
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -266,166 +152,173 @@ const GoodsReceipt: React.FC = () => {
         </Button>
         <PageHeader
           title="Goods Receipt"
-          description="Process and manage incoming deliveries from suppliers"
-          voiceIntroduction="Welcome to Goods Receipt Management."
+          description="Record and verify receipt of goods from purchase orders"
+          voiceIntroduction="Welcome to Goods Receipt for comprehensive delivery verification."
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {receiptMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div className="text-sm text-muted-foreground">{metric.name}</div>
-              <div className={`text-sm ${metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                {metric.change}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Goods Receipt Management</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleCreateReceipt}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Receipt
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{receipts.length}</div>
+            <div className="text-sm text-muted-foreground">Total Receipts</div>
+            <div className="text-sm text-blue-600">This month</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {receipts.filter(r => r.status === 'Pending').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Pending</div>
+            <div className="text-sm text-orange-600">Needs action</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {receipts.filter(r => r.status === 'Complete').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Completed</div>
+            <div className="text-sm text-green-600">Successfully processed</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">97%</div>
+            <div className="text-sm text-muted-foreground">Accuracy Rate</div>
+            <div className="text-sm text-green-600">Above target</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="receipts">Receipts</TabsTrigger>
-          <TabsTrigger value="inspection">Inspection</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="receipts">Goods Receipts</TabsTrigger>
+          <TabsTrigger value="pending">Pending Receipts</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="receipts" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Goods Receipt Directory</CardTitle>
+              <CardTitle className="flex justify-between items-center">
+                Goods Receipt Register
+                <Button onClick={() => toast({ title: 'Create Receipt', description: 'Opening goods receipt form' })}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Receipt
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between mb-4">
-                <div className="flex space-x-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search receipts..." 
-                      className="pl-8 w-80"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="complete">Complete</SelectItem>
-                      <SelectItem value="partial">Partial</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="quality issue">Quality Issue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {isLoading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <DataTable columns={receiptColumns} data={filteredReceipts} />
-              )}
+              <EnhancedDataTable 
+                columns={columns}
+                data={receipts}
+                actions={actions}
+                searchPlaceholder="Search receipts by number, PO, or supplier..."
+                exportable={true}
+                refreshable={true}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="inspection" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quality Inspection</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">Pending Inspection</h3>
-                  <div className="text-2xl font-bold mt-2">
-                    {receipts.filter(r => r.status === 'Pending').length}
+        <TabsContent value="pending" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {receipts.filter(r => r.status === 'Pending' || r.status === 'Partial').map((receipt) => (
+              <Card key={receipt.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    {receipt.receiptNumber}
+                    <Badge className={getStatusColor(receipt.status)}>
+                      {receipt.status}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>PO Number:</span>
+                      <span className="font-medium">{receipt.poNumber}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Supplier:</span>
+                      <span className="font-medium">{receipt.supplier}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Items:</span>
+                      <span className="font-medium">{receipt.receivedItems}/{receipt.totalItems}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Location:</span>
+                      <span className="font-medium">{receipt.location}</span>
+                    </div>
+                    <div className="flex space-x-2 mt-4">
+                      <Button size="sm">
+                        <Package className="h-4 w-4 mr-2" />
+                        Process Receipt
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Schedule Inspection
+                      </Button>
+                    </div>
                   </div>
-                  <div className="text-sm text-orange-600">Awaiting review</div>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">Passed Inspection</h3>
-                  <div className="text-2xl font-bold mt-2">
-                    {receipts.filter(r => r.status === 'Complete').length}
-                  </div>
-                  <div className="text-sm text-green-600">Quality approved</div>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">Failed Inspection</h3>
-                  <div className="text-2xl font-bold mt-2">
-                    {receipts.filter(r => r.status === 'Quality Issue').length}
-                  </div>
-                  <div className="text-sm text-red-600">Quality issues</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Receipt Performance Trends</CardTitle>
+                <CardTitle>Receipt Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="complete" fill="#22c55e" name="Complete" />
-                    <Bar dataKey="partial" fill="#eab308" name="Partial" />
-                    <Bar dataKey="issues" fill="#ef4444" name="Issues" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  <div className="p-4 border rounded">
+                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total Receipts:</span>
+                        <span className="font-medium">{receipts.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>On-Time Rate:</span>
+                        <span className="font-medium">94%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Accuracy Rate:</span>
+                        <span className="font-medium">97%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Top Performing Suppliers</CardTitle>
+                <CardTitle>Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Array.from(new Set(receipts.map(r => r.supplier))).map((supplier, index) => {
-                    const supplierReceipts = receipts.filter(r => r.supplier === supplier);
-                    const completeRate = (supplierReceipts.filter(r => r.status === 'Complete').length / supplierReceipts.length) * 100;
+                  {['Complete', 'Pending', 'Partial', 'Discrepancy'].map((status) => {
+                    const count = receipts.filter(r => r.status === status).length;
+                    const percentage = receipts.length > 0 ? Math.round((count / receipts.length) * 100) : 0;
                     return (
-                      <div key={supplier} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{supplier}</div>
-                          <div className="text-sm text-muted-foreground">{supplierReceipts.length} receipts</div>
+                      <div key={status} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{status}</span>
+                          <span>{count} ({percentage}%)</span>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold">{completeRate.toFixed(1)}%</div>
-                          <div className="text-sm text-muted-foreground">Complete rate</div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
                         </div>
                       </div>
                     );
@@ -435,221 +328,8 @@ const GoodsReceipt: React.FC = () => {
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Receipt Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Daily Receipt Report</span>
-                  <span className="text-xs text-muted-foreground">Today's activities</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Quality Analysis</span>
-                  <span className="text-xs text-muted-foreground">Inspection results</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Supplier Performance</span>
-                  <span className="text-xs text-muted-foreground">Delivery & quality metrics</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Variance Analysis</span>
-                  <span className="text-xs text-muted-foreground">Quantity discrepancies</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Goods Receipt' : 'Create New Goods Receipt'}</DialogTitle>
-          </DialogHeader>
-          <ReceiptForm 
-            receipt={selectedReceipt}
-            onSave={handleSaveReceipt}
-            onCancel={() => setIsDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-};
-
-const ReceiptForm: React.FC<{
-  receipt: GoodsReceipt | null;
-  onSave: (data: Partial<GoodsReceipt>) => void;
-  onCancel: () => void;
-}> = ({ receipt, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    poNumber: receipt?.poNumber || '',
-    supplier: receipt?.supplier || '',
-    material: receipt?.material || '',
-    orderedQty: receipt?.orderedQty || 0,
-    receivedQty: receipt?.receivedQty || 0,
-    deliveryDate: receipt?.deliveryDate || '',
-    receivedDate: receipt?.receivedDate || '',
-    status: receipt?.status || 'Pending',
-    inspector: receipt?.inspector || '',
-    unit: receipt?.unit || 'PCS',
-    location: receipt?.location || '',
-    batchNumber: receipt?.batchNumber || '',
-    notes: receipt?.notes || ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const variance = formData.receivedQty - formData.orderedQty;
-    onSave({ ...formData, variance });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="poNumber">PO Number</Label>
-          <Input
-            id="poNumber"
-            value={formData.poNumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, poNumber: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="supplier">Supplier</Label>
-          <Input
-            id="supplier"
-            value={formData.supplier}
-            onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="material">Material</Label>
-          <Input
-            id="material"
-            value={formData.material}
-            onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="unit">Unit</Label>
-          <Select value={formData.unit} onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PCS">Pieces</SelectItem>
-              <SelectItem value="KG">Kilograms</SelectItem>
-              <SelectItem value="LTR">Liters</SelectItem>
-              <SelectItem value="MTR">Meters</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="orderedQty">Ordered Quantity</Label>
-          <Input
-            id="orderedQty"
-            type="number"
-            value={formData.orderedQty}
-            onChange={(e) => setFormData(prev => ({ ...prev, orderedQty: Number(e.target.value) }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="receivedQty">Received Quantity</Label>
-          <Input
-            id="receivedQty"
-            type="number"
-            value={formData.receivedQty}
-            onChange={(e) => setFormData(prev => ({ ...prev, receivedQty: Number(e.target.value) }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="deliveryDate">Delivery Date</Label>
-          <Input
-            id="deliveryDate"
-            type="date"
-            value={formData.deliveryDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="receivedDate">Received Date</Label>
-          <Input
-            id="receivedDate"
-            type="date"
-            value={formData.receivedDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, receivedDate: e.target.value }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Complete">Complete</SelectItem>
-              <SelectItem value="Partial">Partial</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Quality Issue">Quality Issue</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="inspector">Inspector</Label>
-          <Input
-            id="inspector"
-            value={formData.inspector}
-            onChange={(e) => setFormData(prev => ({ ...prev, inspector: e.target.value }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="location">Storage Location</Label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-          />
-        </div>
-        <div>
-          <Label htmlFor="batchNumber">Batch Number</Label>
-          <Input
-            id="batchNumber"
-            value={formData.batchNumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, batchNumber: e.target.value }))}
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          rows={3}
-        />
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          Save Receipt
-        </Button>
-      </div>
-    </form>
   );
 };
 
