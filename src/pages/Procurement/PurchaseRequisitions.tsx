@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, FileText, CheckCircle, XCircle, Clock, Send } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Eye, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
@@ -14,16 +14,16 @@ import { useToast } from '../../hooks/use-toast';
 
 interface PurchaseRequisition {
   id: string;
-  prNumber: string;
-  title: string;
+  requisitionNumber: string;
+  description: string;
   requestor: string;
   department: string;
-  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-  status: 'Draft' | 'Submitted' | 'Approved' | 'Rejected' | 'Converted';
-  requestDate: string;
-  requiredDate: string;
   totalAmount: number;
   currency: string;
+  status: 'Draft' | 'Pending' | 'Approved' | 'Rejected' | 'Converted';
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  requestDate: string;
+  requiredDate: string;
   approver: string;
   items: number;
 }
@@ -38,7 +38,7 @@ const PurchaseRequisitions: React.FC = () => {
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Purchase Requisitions. Create and manage internal purchase requests and approval workflows.');
+      speak('Welcome to Purchase Requisitions. Manage internal purchase requests and approval workflows.');
     }
   }, [isEnabled, speak]);
 
@@ -46,32 +46,32 @@ const PurchaseRequisitions: React.FC = () => {
     const sampleRequisitions: PurchaseRequisition[] = [
       {
         id: 'pr-001',
-        prNumber: 'PR-2025-001',
-        title: 'Office Equipment Request',
+        requisitionNumber: 'PR-2025-001',
+        description: 'Office Equipment Request',
         requestor: 'John Smith',
         department: 'IT Department',
+        totalAmount: 2500.00,
+        currency: 'USD',
+        status: 'Pending',
         priority: 'Medium',
-        status: 'Approved',
         requestDate: '2025-01-20',
         requiredDate: '2025-02-15',
-        totalAmount: 5500,
-        currency: 'USD',
         approver: 'Sarah Wilson',
-        items: 8
+        items: 3
       },
       {
         id: 'pr-002',
-        prNumber: 'PR-2025-002',
-        title: 'Software Licenses',
-        requestor: 'Mike Johnson',
-        department: 'Development',
-        priority: 'High',
-        status: 'Submitted',
-        requestDate: '2025-01-25',
-        requiredDate: '2025-02-01',
-        totalAmount: 12000,
+        requisitionNumber: 'PR-2025-002',
+        description: 'Marketing Materials',
+        requestor: 'Lisa Chen',
+        department: 'Marketing',
+        totalAmount: 850.00,
         currency: 'USD',
-        approver: '',
+        status: 'Approved',
+        priority: 'Low',
+        requestDate: '2025-01-18',
+        requiredDate: '2025-02-01',
+        approver: 'Mike Brown',
         items: 5
       }
     ];
@@ -81,17 +81,17 @@ const PurchaseRequisitions: React.FC = () => {
   const getStatusColor = (status: string) => {
     const colors = {
       'Draft': 'bg-gray-100 text-gray-800',
-      'Submitted': 'bg-blue-100 text-blue-800',
+      'Pending': 'bg-yellow-100 text-yellow-800',
       'Approved': 'bg-green-100 text-green-800',
       'Rejected': 'bg-red-100 text-red-800',
-      'Converted': 'bg-purple-100 text-purple-800'
+      'Converted': 'bg-blue-100 text-blue-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   const getPriorityColor = (priority: string) => {
     const colors = {
-      'Low': 'bg-blue-100 text-blue-800',
+      'Low': 'bg-green-100 text-green-800',
       'Medium': 'bg-yellow-100 text-yellow-800',
       'High': 'bg-orange-100 text-orange-800',
       'Urgent': 'bg-red-100 text-red-800'
@@ -100,15 +100,32 @@ const PurchaseRequisitions: React.FC = () => {
   };
 
   const columns: EnhancedColumn[] = [
-    { key: 'prNumber', header: 'PR Number', sortable: true, searchable: true },
-    { key: 'title', header: 'Title', searchable: true },
-    { key: 'requestor', header: 'Requestor', sortable: true, searchable: true },
+    { key: 'requisitionNumber', header: 'Requisition #', sortable: true, searchable: true },
+    { key: 'description', header: 'Description', searchable: true },
+    { key: 'requestor', header: 'Requestor', searchable: true },
     { key: 'department', header: 'Department', filterable: true, filterOptions: [
       { label: 'IT Department', value: 'IT Department' },
-      { label: 'Development', value: 'Development' },
-      { label: 'HR', value: 'HR' },
-      { label: 'Finance', value: 'Finance' }
+      { label: 'Marketing', value: 'Marketing' },
+      { label: 'Finance', value: 'Finance' },
+      { label: 'Operations', value: 'Operations' }
     ]},
+    { 
+      key: 'status', 
+      header: 'Status',
+      filterable: true,
+      filterOptions: [
+        { label: 'Draft', value: 'Draft' },
+        { label: 'Pending', value: 'Pending' },
+        { label: 'Approved', value: 'Approved' },
+        { label: 'Rejected', value: 'Rejected' },
+        { label: 'Converted', value: 'Converted' }
+      ],
+      render: (value: string) => (
+        <Badge className={getStatusColor(value)}>
+          {value}
+        </Badge>
+      )
+    },
     { 
       key: 'priority', 
       header: 'Priority',
@@ -126,67 +143,36 @@ const PurchaseRequisitions: React.FC = () => {
       )
     },
     { 
-      key: 'status', 
-      header: 'Status',
-      filterable: true,
-      filterOptions: [
-        { label: 'Draft', value: 'Draft' },
-        { label: 'Submitted', value: 'Submitted' },
-        { label: 'Approved', value: 'Approved' },
-        { label: 'Rejected', value: 'Rejected' },
-        { label: 'Converted', value: 'Converted' }
-      ],
-      render: (value: string) => (
-        <Badge className={getStatusColor(value)}>
-          {value}
-        </Badge>
-      )
-    },
-    { key: 'requiredDate', header: 'Required Date', sortable: true },
-    { 
       key: 'totalAmount', 
       header: 'Amount',
       sortable: true,
       render: (value: number, row: PurchaseRequisition) => `${row.currency} ${value.toLocaleString()}`
-    }
+    },
+    { key: 'requiredDate', header: 'Required Date', sortable: true }
   ];
 
   const actions: TableAction[] = [
     {
-      label: 'Approve',
-      icon: <CheckCircle className="h-4 w-4" />,
+      label: 'View',
+      icon: <Eye className="h-4 w-4" />,
       onClick: (row: PurchaseRequisition) => {
         toast({
-          title: 'Approve Requisition',
-          description: `Approving requisition ${row.prNumber}`,
+          title: 'View Requisition',
+          description: `Opening ${row.requisitionNumber}`,
         });
       },
-      variant: 'default',
-      condition: (row: PurchaseRequisition) => row.status === 'Submitted'
+      variant: 'ghost'
     },
     {
-      label: 'Convert to PO',
-      icon: <Send className="h-4 w-4" />,
+      label: 'Edit',
+      icon: <Edit className="h-4 w-4" />,
       onClick: (row: PurchaseRequisition) => {
         toast({
-          title: 'Convert to Purchase Order',
-          description: `Converting ${row.prNumber} to purchase order`,
+          title: 'Edit Requisition',
+          description: `Editing ${row.requisitionNumber}`,
         });
       },
-      variant: 'default',
-      condition: (row: PurchaseRequisition) => row.status === 'Approved'
-    },
-    {
-      label: 'Reject',
-      icon: <XCircle className="h-4 w-4" />,
-      onClick: (row: PurchaseRequisition) => {
-        toast({
-          title: 'Reject Requisition',
-          description: `Rejecting requisition ${row.prNumber}`,
-        });
-      },
-      variant: 'destructive',
-      condition: (row: PurchaseRequisition) => row.status === 'Submitted'
+      variant: 'ghost'
     }
   ];
 
@@ -203,8 +189,8 @@ const PurchaseRequisitions: React.FC = () => {
         </Button>
         <PageHeader
           title="Purchase Requisitions"
-          description="Create and manage internal purchase requests and approval workflows"
-          voiceIntroduction="Welcome to Purchase Requisitions for comprehensive request management."
+          description="Manage internal purchase requests and approval workflows"
+          voiceIntroduction="Welcome to Purchase Requisitions for managing internal requests."
         />
       </div>
 
@@ -219,7 +205,7 @@ const PurchaseRequisitions: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {requisitions.filter(r => r.status === 'Submitted').length}
+              {requisitions.filter(r => r.status === 'Pending').length}
             </div>
             <div className="text-sm text-muted-foreground">Pending Approval</div>
             <div className="text-sm text-orange-600">Needs attention</div>
@@ -231,7 +217,7 @@ const PurchaseRequisitions: React.FC = () => {
               {requisitions.filter(r => r.status === 'Approved').length}
             </div>
             <div className="text-sm text-muted-foreground">Approved</div>
-            <div className="text-sm text-green-600">Ready for conversion</div>
+            <div className="text-sm text-green-600">Ready to convert</div>
           </CardContent>
         </Card>
         <Card>
@@ -240,7 +226,7 @@ const PurchaseRequisitions: React.FC = () => {
               ${requisitions.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Total Value</div>
-            <div className="text-sm text-purple-600">All requisitions</div>
+            <div className="text-sm text-purple-600">Requested</div>
           </CardContent>
         </Card>
       </div>
@@ -248,7 +234,7 @@ const PurchaseRequisitions: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="requisitions">Requisitions</TabsTrigger>
-          <TabsTrigger value="approval">Approval Workflow</TabsTrigger>
+          <TabsTrigger value="approval">Approval Queue</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -257,7 +243,7 @@ const PurchaseRequisitions: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 Purchase Requisitions
-                <Button onClick={() => toast({ title: 'Create Requisition', description: 'Opening requisition creation form' })}>
+                <Button onClick={() => toast({ title: 'Create Requisition', description: 'Opening new requisition form' })}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Requisition
                 </Button>
@@ -268,7 +254,7 @@ const PurchaseRequisitions: React.FC = () => {
                 columns={columns}
                 data={requisitions}
                 actions={actions}
-                searchPlaceholder="Search requisitions by number, title, or requestor..."
+                searchPlaceholder="Search requisitions..."
                 exportable={true}
                 refreshable={true}
               />
@@ -277,109 +263,73 @@ const PurchaseRequisitions: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="approval" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {requisitions.filter(r => r.status === 'Submitted').map((requisition) => (
-              <Card key={requisition.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    {requisition.prNumber}
-                    <Badge className={getPriorityColor(requisition.priority)}>
-                      {requisition.priority}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>Title:</span>
-                      <span className="font-medium">{requisition.title}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Requestor:</span>
-                      <span className="font-medium">{requisition.requestor}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Department:</span>
-                      <span className="font-medium">{requisition.department}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Amount:</span>
-                      <span className="font-medium">{requisition.currency} {requisition.totalAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Required Date:</span>
-                      <span className="font-medium">{requisition.requiredDate}</span>
-                    </div>
-                    <div className="flex space-x-2 mt-4">
-                      <Button size="sm">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Approve
-                      </Button>
-                      <Button size="sm" variant="destructive">
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Reject
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Review
-                      </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Approval Queue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {requisitions.filter(r => r.status === 'Pending').map((requisition) => (
+                  <div key={requisition.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{requisition.requisitionNumber}</h4>
+                        <p className="text-sm text-muted-foreground">{requisition.description}</p>
+                        <p className="text-sm">Requestor: {requisition.requestor} | Amount: ${requisition.totalAmount.toLocaleString()}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Requisition Performance</CardTitle>
+                <CardTitle>Requisition Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="p-4 border rounded">
-                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Total Requisitions:</span>
-                        <span className="font-medium">{requisitions.length}</span>
+                  {['Draft', 'Pending', 'Approved', 'Rejected', 'Converted'].map((status) => {
+                    const count = requisitions.filter(r => r.status === status).length;
+                    return (
+                      <div key={status} className="flex justify-between">
+                        <span>{status}</span>
+                        <span className="font-medium">{count}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Approval Rate:</span>
-                        <span className="font-medium">85%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Avg. Processing Time:</span>
-                        <span className="font-medium">3.2 days</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Status Distribution</CardTitle>
+                <CardTitle>Department Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {['Draft', 'Submitted', 'Approved', 'Rejected', 'Converted'].map((status) => {
-                    const count = requisitions.filter(r => r.status === status).length;
-                    const percentage = requisitions.length > 0 ? Math.round((count / requisitions.length) * 100) : 0;
+                  {['IT Department', 'Marketing', 'Finance', 'Operations'].map((dept) => {
+                    const count = requisitions.filter(r => r.department === dept).length;
+                    const total = requisitions.filter(r => r.department === dept).reduce((sum, r) => sum + r.totalAmount, 0);
                     return (
-                      <div key={status} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>{status}</span>
-                          <span>{count} ({percentage}%)</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${percentage}%` }}
-                          ></div>
+                      <div key={dept} className="space-y-1">
+                        <div className="flex justify-between">
+                          <span>{dept}</span>
+                          <span className="font-medium">{count} req | ${total.toLocaleString()}</span>
                         </div>
                       </div>
                     );

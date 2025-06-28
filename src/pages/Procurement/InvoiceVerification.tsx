@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, FileText, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
+import { ArrowLeft, Plus, CheckCircle, XCircle, AlertTriangle, DollarSign, FileText } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
@@ -15,15 +15,17 @@ import { useToast } from '../../hooks/use-toast';
 interface Invoice {
   id: string;
   invoiceNumber: string;
-  poNumber: string;
   supplier: string;
+  poNumber: string;
   invoiceDate: string;
   dueDate: string;
-  amount: number;
+  totalAmount: number;
   currency: string;
-  status: 'Pending' | 'Verified' | 'Approved' | 'Rejected' | 'Paid';
-  verifier: string;
-  discrepancies: number;
+  status: 'Pending' | 'Matched' | 'Blocked' | 'Approved' | 'Paid' | 'Rejected';
+  matchingStatus: 'Not Matched' | 'Partially Matched' | 'Fully Matched' | 'Variances Found';
+  paymentTerms: string;
+  processor: string;
+  discrepancies: string[];
 }
 
 const InvoiceVerification: React.FC = () => {
@@ -36,37 +38,41 @@ const InvoiceVerification: React.FC = () => {
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Invoice Verification. Verify and approve supplier invoices for payment processing.');
+      speak('Welcome to Invoice Verification. Verify and process supplier invoices against purchase orders and goods receipts.');
     }
   }, [isEnabled, speak]);
 
   useEffect(() => {
     const sampleInvoices: Invoice[] = [
       {
-        id: 'iv-001',
-        invoiceNumber: 'INV-2025-0156',
-        poNumber: 'PO-2025-001',
+        id: 'inv-001',
+        invoiceNumber: 'INV-2025-001',
         supplier: 'Dell Technologies',
+        poNumber: 'PO-2025-123',
         invoiceDate: '2025-01-26',
         dueDate: '2025-02-25',
-        amount: 8750,
+        totalAmount: 12500.00,
         currency: 'USD',
-        status: 'Verified',
-        verifier: 'Mike Wilson',
-        discrepancies: 0
+        status: 'Matched',
+        matchingStatus: 'Fully Matched',
+        paymentTerms: 'Net 30',
+        processor: 'John Smith',
+        discrepancies: []
       },
       {
-        id: 'iv-002',
-        invoiceNumber: 'INV-2025-0157',
-        poNumber: 'PO-2025-002',
-        supplier: 'Office Depot Inc.',
+        id: 'inv-002',
+        invoiceNumber: 'INV-2025-002',
+        supplier: 'Office Depot',
+        poNumber: 'PO-2025-124',
         invoiceDate: '2025-01-25',
-        dueDate: '2025-02-24',
-        amount: 1250,
+        dueDate: '2025-02-09',
+        totalAmount: 1250.00,
         currency: 'USD',
-        status: 'Pending',
-        verifier: '',
-        discrepancies: 1
+        status: 'Blocked',
+        matchingStatus: 'Variances Found',
+        paymentTerms: 'Net 15',
+        processor: 'Sarah Wilson',
+        discrepancies: ['Quantity variance: Ordered 100, Invoiced 85', 'Price variance: PO $1.25, Invoice $1.47']
       }
     ];
     setInvoices(sampleInvoices);
@@ -75,22 +81,31 @@ const InvoiceVerification: React.FC = () => {
   const getStatusColor = (status: string) => {
     const colors = {
       'Pending': 'bg-yellow-100 text-yellow-800',
-      'Verified': 'bg-blue-100 text-blue-800',
+      'Matched': 'bg-blue-100 text-blue-800',
+      'Blocked': 'bg-red-100 text-red-800',
       'Approved': 'bg-green-100 text-green-800',
-      'Rejected': 'bg-red-100 text-red-800',
-      'Paid': 'bg-gray-100 text-gray-800'
+      'Paid': 'bg-gray-100 text-gray-800',
+      'Rejected': 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const getMatchingColor = (matching: string) => {
+    const colors = {
+      'Not Matched': 'bg-gray-100 text-gray-800',
+      'Partially Matched': 'bg-yellow-100 text-yellow-800',
+      'Fully Matched': 'bg-green-100 text-green-800',
+      'Variances Found': 'bg-red-100 text-red-800'
+    };
+    return colors[matching as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
   const columns: EnhancedColumn[] = [
     { key: 'invoiceNumber', header: 'Invoice #', sortable: true, searchable: true },
-    { key: 'poNumber', header: 'PO Number', sortable: true, searchable: true },
-    { key: 'supplier', header: 'Supplier', sortable: true, searchable: true },
-    { key: 'invoiceDate', header: 'Invoice Date', sortable: true },
-    { key: 'dueDate', header: 'Due Date', sortable: true },
+    { key: 'supplier', header: 'Supplier', searchable: true },
+    { key: 'poNumber', header: 'PO Number', searchable: true },
     { 
-      key: 'amount', 
+      key: 'totalAmount', 
       header: 'Amount',
       sortable: true,
       render: (value: number, row: Invoice) => `${row.currency} ${value.toLocaleString()}`
@@ -101,10 +116,11 @@ const InvoiceVerification: React.FC = () => {
       filterable: true,
       filterOptions: [
         { label: 'Pending', value: 'Pending' },
-        { label: 'Verified', value: 'Verified' },
+        { label: 'Matched', value: 'Matched' },
+        { label: 'Blocked', value: 'Blocked' },
         { label: 'Approved', value: 'Approved' },
-        { label: 'Rejected', value: 'Rejected' },
-        { label: 'Paid', value: 'Paid' }
+        { label: 'Paid', value: 'Paid' },
+        { label: 'Rejected', value: 'Rejected' }
       ],
       render: (value: string) => (
         <Badge className={getStatusColor(value)}>
@@ -112,16 +128,24 @@ const InvoiceVerification: React.FC = () => {
         </Badge>
       )
     },
-    { key: 'verifier', header: 'Verifier', searchable: true },
     { 
-      key: 'discrepancies', 
-      header: 'Issues',
-      render: (value: number) => value > 0 ? (
-        <Badge variant="destructive">{value}</Badge>
-      ) : (
-        <Badge variant="outline">None</Badge>
+      key: 'matchingStatus', 
+      header: 'Matching',
+      filterable: true,
+      filterOptions: [
+        { label: 'Not Matched', value: 'Not Matched' },
+        { label: 'Partially Matched', value: 'Partially Matched' },
+        { label: 'Fully Matched', value: 'Fully Matched' },
+        { label: 'Variances Found', value: 'Variances Found' }
+      ],
+      render: (value: string) => (
+        <Badge className={getMatchingColor(value)}>
+          {value}
+        </Badge>
       )
-    }
+    },
+    { key: 'dueDate', header: 'Due Date', sortable: true },
+    { key: 'processor', header: 'Processor', searchable: true }
   ];
 
   const actions: TableAction[] = [
@@ -131,34 +155,21 @@ const InvoiceVerification: React.FC = () => {
       onClick: (row: Invoice) => {
         toast({
           title: 'Verify Invoice',
-          description: `Verifying invoice ${row.invoiceNumber}`,
+          description: `Starting verification for ${row.invoiceNumber}`,
         });
       },
-      variant: 'default',
-      condition: (row: Invoice) => row.status === 'Pending'
+      variant: 'ghost'
     },
     {
-      label: 'Approve',
-      icon: <DollarSign className="h-4 w-4" />,
+      label: 'Review Discrepancies',
+      icon: <AlertTriangle className="h-4 w-4" />,
       onClick: (row: Invoice) => {
         toast({
-          title: 'Approve Invoice',
-          description: `Approving invoice ${row.invoiceNumber} for payment`,
+          title: 'Review Discrepancies',
+          description: `Reviewing discrepancies for ${row.invoiceNumber}`,
         });
       },
-      variant: 'default',
-      condition: (row: Invoice) => row.status === 'Verified'
-    },
-    {
-      label: 'Report Issue',
-      icon: <AlertCircle className="h-4 w-4" />,
-      onClick: (row: Invoice) => {
-        toast({
-          title: 'Report Issue',
-          description: `Reporting discrepancy for ${row.invoiceNumber}`,
-        });
-      },
-      variant: 'destructive'
+      variant: 'ghost'
     }
   ];
 
@@ -175,8 +186,8 @@ const InvoiceVerification: React.FC = () => {
         </Button>
         <PageHeader
           title="Invoice Verification"
-          description="Verify and approve supplier invoices for payment processing"
-          voiceIntroduction="Welcome to Invoice Verification for comprehensive invoice processing."
+          description="Verify and process supplier invoices for payment"
+          voiceIntroduction="Welcome to Invoice Verification for processing supplier invoices."
         />
       </div>
 
@@ -191,26 +202,28 @@ const InvoiceVerification: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {invoices.filter(i => i.status === 'Pending').length}
+              {invoices.filter(i => i.status === 'Pending' || i.status === 'Blocked').length}
             </div>
-            <div className="text-sm text-muted-foreground">Pending Verification</div>
-            <div className="text-sm text-orange-600">Needs action</div>
+            <div className="text-sm text-muted-foreground">Pending Review</div>
+            <div className="text-sm text-orange-600">Needs attention</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              ${invoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
+              {invoices.filter(i => i.matchingStatus === 'Fully Matched').length}
             </div>
-            <div className="text-sm text-muted-foreground">Total Value</div>
-            <div className="text-sm text-green-600">This month</div>
+            <div className="text-sm text-muted-foreground">Fully Matched</div>
+            <div className="text-sm text-green-600">Ready for payment</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">2.1</div>
-            <div className="text-sm text-muted-foreground">Avg. Processing Days</div>
-            <div className="text-sm text-green-600">Below target</div>
+            <div className="text-2xl font-bold">
+              ${invoices.reduce((sum, i) => sum + i.totalAmount, 0).toLocaleString()}
+            </div>
+            <div className="text-sm text-muted-foreground">Total Value</div>
+            <div className="text-sm text-purple-600">Awaiting payment</div>
           </CardContent>
         </Card>
       </div>
@@ -218,8 +231,8 @@ const InvoiceVerification: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
-          <TabsTrigger value="pending">Pending Verification</TabsTrigger>
-          <TabsTrigger value="discrepancies">Discrepancies</TabsTrigger>
+          <TabsTrigger value="matching">Matching</TabsTrigger>
+          <TabsTrigger value="blocked">Blocked</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -227,10 +240,10 @@ const InvoiceVerification: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                Invoice Register
-                <Button onClick={() => toast({ title: 'Record Invoice', description: 'Opening invoice entry form' })}>
+                Invoice Verification Queue
+                <Button onClick={() => toast({ title: 'Upload Invoice', description: 'Opening invoice upload form' })}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Record Invoice
+                  Upload Invoice
                 </Button>
               </CardTitle>
             </CardHeader>
@@ -239,7 +252,7 @@ const InvoiceVerification: React.FC = () => {
                 columns={columns}
                 data={invoices}
                 actions={actions}
-                searchPlaceholder="Search invoices by number, PO, or supplier..."
+                searchPlaceholder="Search invoices, suppliers, or PO numbers..."
                 exportable={true}
                 refreshable={true}
               />
@@ -247,130 +260,109 @@ const InvoiceVerification: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="pending" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {invoices.filter(i => i.status === 'Pending').map((invoice) => (
-              <Card key={invoice.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    {invoice.invoiceNumber}
-                    <Badge className={getStatusColor(invoice.status)}>
-                      {invoice.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>PO Number:</span>
-                      <span className="font-medium">{invoice.poNumber}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Supplier:</span>
-                      <span className="font-medium">{invoice.supplier}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Amount:</span>
-                      <span className="font-medium">{invoice.currency} {invoice.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Due Date:</span>
-                      <span className="font-medium">{invoice.dueDate}</span>
-                    </div>
-                    {invoice.discrepancies > 0 && (
-                      <div className="flex justify-between">
-                        <span>Issues:</span>
-                        <Badge variant="destructive">{invoice.discrepancies}</Badge>
-                      </div>
-                    )}
-                    <div className="flex space-x-2 mt-4">
-                      <Button size="sm">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Verify
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="discrepancies" className="space-y-4">
+        <TabsContent value="matching" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Invoice Discrepancies</CardTitle>
+              <CardTitle>Three-Way Matching</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {invoices.filter(i => i.discrepancies > 0).map((invoice) => (
-                  <div key={invoice.id} className="p-4 border rounded border-red-200 bg-red-50">
-                    <div className="flex justify-between items-start mb-2">
+                {invoices.filter(i => i.matchingStatus !== 'Fully Matched').map((invoice) => (
+                  <div key={invoice.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-semibold">{invoice.invoiceNumber}</h4>
-                        <p className="text-sm text-muted-foreground">{invoice.supplier}</p>
+                        <h4 className="font-semibold flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          {invoice.invoiceNumber}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          Supplier: {invoice.supplier} | PO: {invoice.poNumber}
+                        </p>
+                        <p className="text-sm">Amount: {invoice.currency} {invoice.totalAmount.toLocaleString()}</p>
+                        <Badge className={getMatchingColor(invoice.matchingStatus)}>
+                          {invoice.matchingStatus}
+                        </Badge>
                       </div>
-                      <Badge variant="destructive">{invoice.discrepancies} issues</Badge>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Match
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Review
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm mb-3">
-                      Amount: {invoice.currency} {invoice.amount.toLocaleString()}
-                    </p>
-                    <div className="flex space-x-2">
-                      <Button size="sm">Resolve</Button>
-                      <Button size="sm" variant="outline">Contact Supplier</Button>
+                    {invoice.discrepancies.length > 0 && (
+                      <div className="mt-3 p-2 bg-red-50 rounded">
+                        <p className="text-sm font-medium text-red-800">Discrepancies:</p>
+                        <ul className="text-sm text-red-700 mt-1">
+                          {invoice.discrepancies.map((disc, index) => (
+                            <li key={index}>• {disc}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="blocked" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Blocked Invoices</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {invoices.filter(i => i.status === 'Blocked').map((invoice) => (
+                  <div key={invoice.id} className="p-4 border rounded-lg bg-red-50">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold flex items-center text-red-800">
+                          <XCircle className="h-4 w-4 mr-2" />
+                          {invoice.invoiceNumber} - BLOCKED
+                        </h4>
+                        <p className="text-sm text-red-700">
+                          {invoice.supplier} | Due: {invoice.dueDate}
+                        </p>
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-red-800">Issues:</p>
+                          <ul className="text-sm text-red-700">
+                            {invoice.discrepancies.map((disc, index) => (
+                              <li key={index}>• {disc}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          Resolve
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          Reject
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
-                {invoices.filter(i => i.discrepancies > 0).length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No discrepancies found. All invoices are in good order.
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Processing Performance</CardTitle>
+                <CardTitle>Invoice Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="p-4 border rounded">
-                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Total Invoices:</span>
-                        <span className="font-medium">{invoices.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Processed:</span>
-                        <span className="font-medium">{invoices.filter(i => i.status !== 'Pending').length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Avg. Processing Time:</span>
-                        <span className="font-medium">2.1 days</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Status Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {['Pending', 'Verified', 'Approved', 'Rejected', 'Paid'].map((status) => {
+                  {['Pending', 'Matched', 'Blocked', 'Approved', 'Paid', 'Rejected'].map((status) => {
                     const count = invoices.filter(i => i.status === status).length;
                     const percentage = invoices.length > 0 ? Math.round((count / invoices.length) * 100) : 0;
                     return (
@@ -388,6 +380,34 @@ const InvoiceVerification: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Processing Efficiency</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 border rounded">
+                    <div className="flex justify-between items-center">
+                      <span>Straight-Through Processing</span>
+                      <span className="font-bold text-green-600">65%</span>
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded">
+                    <div className="flex justify-between items-center">
+                      <span>Average Processing Time</span>
+                      <span className="font-bold">2.3 days</span>
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded">
+                    <div className="flex justify-between items-center">
+                      <span>Exception Rate</span>
+                      <span className="font-bold text-orange-600">15%</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

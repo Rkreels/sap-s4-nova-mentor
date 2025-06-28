@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, FileText, Send, Users, Clock, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Eye, Send, Clock, Users, Award } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
@@ -16,15 +16,16 @@ interface RFQ {
   id: string;
   rfqNumber: string;
   title: string;
+  description: string;
   category: string;
-  status: 'Draft' | 'Published' | 'Response Period' | 'Evaluation' | 'Awarded' | 'Closed';
+  status: 'Draft' | 'Published' | 'Response Period' | 'Evaluation' | 'Awarded' | 'Cancelled';
   publishDate: string;
   responseDeadline: string;
-  totalSuppliers: number;
-  responsesReceived: number;
-  estimatedValue: number;
+  totalValue: number;
   currency: string;
-  buyer: string;
+  suppliersInvited: number;
+  responsesReceived: number;
+  creator: string;
 }
 
 const RFQManagement: React.FC = () => {
@@ -37,7 +38,7 @@ const RFQManagement: React.FC = () => {
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to RFQ Management. Request quotes from suppliers and manage bidding processes.');
+      speak('Welcome to RFQ Management. Request quotes from suppliers and manage competitive bidding processes.');
     }
   }, [isEnabled, speak]);
 
@@ -46,30 +47,32 @@ const RFQManagement: React.FC = () => {
       {
         id: 'rfq-001',
         rfqNumber: 'RFQ-2025-001',
-        title: 'IT Infrastructure Equipment',
+        title: 'IT Equipment Supply',
+        description: 'Request for quotes for laptops and desktop computers',
         category: 'Technology',
         status: 'Response Period',
-        publishDate: '2025-01-20',
-        responseDeadline: '2025-02-05',
-        totalSuppliers: 8,
-        responsesReceived: 5,
-        estimatedValue: 250000,
+        publishDate: '2025-01-15',
+        responseDeadline: '2025-02-01',
+        totalValue: 150000,
         currency: 'USD',
-        buyer: 'John Smith'
+        suppliersInvited: 8,
+        responsesReceived: 5,
+        creator: 'John Smith'
       },
       {
         id: 'rfq-002',
         rfqNumber: 'RFQ-2025-002',
-        title: 'Office Furniture Supply',
+        title: 'Office Furniture',
+        description: 'Ergonomic chairs and desks for new office space',
         category: 'Furniture',
         status: 'Evaluation',
-        publishDate: '2025-01-15',
-        responseDeadline: '2025-01-30',
-        totalSuppliers: 6,
-        responsesReceived: 6,
-        estimatedValue: 75000,
+        publishDate: '2025-01-10',
+        responseDeadline: '2025-01-25',
+        totalValue: 85000,
         currency: 'USD',
-        buyer: 'Sarah Wilson'
+        suppliersInvited: 6,
+        responsesReceived: 6,
+        creator: 'Sarah Wilson'
       }
     ];
     setRfqs(sampleRFQs);
@@ -82,7 +85,7 @@ const RFQManagement: React.FC = () => {
       'Response Period': 'bg-yellow-100 text-yellow-800',
       'Evaluation': 'bg-orange-100 text-orange-800',
       'Awarded': 'bg-green-100 text-green-800',
-      'Closed': 'bg-red-100 text-red-800'
+      'Cancelled': 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -106,7 +109,7 @@ const RFQManagement: React.FC = () => {
         { label: 'Response Period', value: 'Response Period' },
         { label: 'Evaluation', value: 'Evaluation' },
         { label: 'Awarded', value: 'Awarded' },
-        { label: 'Closed', value: 'Closed' }
+        { label: 'Cancelled', value: 'Cancelled' }
       ],
       render: (value: string) => (
         <Badge className={getStatusColor(value)}>
@@ -114,53 +117,40 @@ const RFQManagement: React.FC = () => {
         </Badge>
       )
     },
-    { key: 'responseDeadline', header: 'Deadline', sortable: true },
     { 
-      key: 'responsesReceived', 
-      header: 'Responses',
-      render: (value: number, row: RFQ) => `${value}/${row.totalSuppliers}`
-    },
-    { 
-      key: 'estimatedValue', 
+      key: 'totalValue', 
       header: 'Est. Value',
       sortable: true,
       render: (value: number, row: RFQ) => `${row.currency} ${value.toLocaleString()}`
     },
-    { key: 'buyer', header: 'Buyer', searchable: true }
+    { 
+      key: 'responsesReceived', 
+      header: 'Responses',
+      render: (value: number, row: RFQ) => `${value}/${row.suppliersInvited}`
+    },
+    { key: 'responseDeadline', header: 'Deadline', sortable: true },
+    { key: 'creator', header: 'Creator', searchable: true }
   ];
 
   const actions: TableAction[] = [
     {
-      label: 'Publish',
-      icon: <Send className="h-4 w-4" />,
+      label: 'View',
+      icon: <Eye className="h-4 w-4" />,
       onClick: (row: RFQ) => {
         toast({
-          title: 'Publish RFQ',
-          description: `Publishing RFQ ${row.rfqNumber}`,
+          title: 'View RFQ',
+          description: `Opening ${row.rfqNumber}`,
         });
       },
-      variant: 'default',
-      condition: (row: RFQ) => row.status === 'Draft'
+      variant: 'ghost'
     },
     {
-      label: 'Evaluate',
-      icon: <TrendingUp className="h-4 w-4" />,
+      label: 'Edit',
+      icon: <Edit className="h-4 w-4" />,
       onClick: (row: RFQ) => {
         toast({
-          title: 'Evaluate Responses',
-          description: `Opening evaluation for ${row.rfqNumber}`,
-        });
-      },
-      variant: 'default',
-      condition: (row: RFQ) => row.status === 'Response Period' && row.responsesReceived > 0
-    },
-    {
-      label: 'View Details',
-      icon: <FileText className="h-4 w-4" />,
-      onClick: (row: RFQ) => {
-        toast({
-          title: 'View RFQ Details',
-          description: `Opening details for ${row.rfqNumber}`,
+          title: 'Edit RFQ',
+          description: `Editing ${row.rfqNumber}`,
         });
       },
       variant: 'ghost'
@@ -181,7 +171,7 @@ const RFQManagement: React.FC = () => {
         <PageHeader
           title="RFQ Management"
           description="Request quotes from suppliers and manage competitive bidding processes"
-          voiceIntroduction="Welcome to RFQ Management for comprehensive quote management."
+          voiceIntroduction="Welcome to RFQ Management for competitive sourcing."
         />
       </div>
 
@@ -189,8 +179,8 @@ const RFQManagement: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{rfqs.length}</div>
-            <div className="text-sm text-muted-foreground">Total RFQs</div>
-            <div className="text-sm text-blue-600">This month</div>
+            <div className="text-sm text-muted-foreground">Active RFQs</div>
+            <div className="text-sm text-blue-600">In progress</div>
           </CardContent>
         </Card>
         <Card>
@@ -198,8 +188,8 @@ const RFQManagement: React.FC = () => {
             <div className="text-2xl font-bold">
               {rfqs.filter(r => r.status === 'Response Period').length}
             </div>
-            <div className="text-sm text-muted-foreground">Active RFQs</div>
-            <div className="text-sm text-green-600">Collecting responses</div>
+            <div className="text-sm text-muted-foreground">Awaiting Responses</div>
+            <div className="text-sm text-yellow-600">Open for bids</div>
           </CardContent>
         </Card>
         <Card>
@@ -208,25 +198,24 @@ const RFQManagement: React.FC = () => {
               {rfqs.reduce((sum, r) => sum + r.responsesReceived, 0)}
             </div>
             <div className="text-sm text-muted-foreground">Total Responses</div>
-            <div className="text-sm text-purple-600">All RFQs</div>
+            <div className="text-sm text-green-600">Received</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              ${rfqs.reduce((sum, r) => sum + r.estimatedValue, 0).toLocaleString()}
+              ${rfqs.reduce((sum, r) => sum + r.totalValue, 0).toLocaleString()}
             </div>
-            <div className="text-sm text-muted-foreground">Total Est. Value</div>
-            <div className="text-sm text-orange-600">All active RFQs</div>
+            <div className="text-sm text-muted-foreground">Total Value</div>
+            <div className="text-sm text-purple-600">Estimated</div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="rfqs">RFQs</TabsTrigger>
-          <TabsTrigger value="active">Active Bidding</TabsTrigger>
-          <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
+          <TabsTrigger value="responses">Responses</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -234,8 +223,8 @@ const RFQManagement: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                Request for Quotations
-                <Button onClick={() => toast({ title: 'Create RFQ', description: 'Opening RFQ creation form' })}>
+                Request for Quotes
+                <Button onClick={() => toast({ title: 'Create RFQ', description: 'Opening new RFQ form' })}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create RFQ
                 </Button>
@@ -246,7 +235,7 @@ const RFQManagement: React.FC = () => {
                 columns={columns}
                 data={rfqs}
                 actions={actions}
-                searchPlaceholder="Search RFQs by number, title, or category..."
+                searchPlaceholder="Search RFQs..."
                 exportable={true}
                 refreshable={true}
               />
@@ -254,82 +243,31 @@ const RFQManagement: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="active" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {rfqs.filter(r => r.status === 'Response Period').map((rfq) => (
-              <Card key={rfq.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    {rfq.title}
-                    <Badge className={getStatusColor(rfq.status)}>
-                      {rfq.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>RFQ Number:</span>
-                      <span className="font-medium">{rfq.rfqNumber}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Category:</span>
-                      <span className="font-medium">{rfq.category}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Deadline:</span>
-                      <span className="font-medium">{rfq.responseDeadline}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Responses:</span>
-                      <span className="font-medium">{rfq.responsesReceived}/{rfq.totalSuppliers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Est. Value:</span>
-                      <span className="font-medium">{rfq.currency} {rfq.estimatedValue.toLocaleString()}</span>
-                    </div>
-                    <div className="flex space-x-2 mt-4">
-                      <Button size="sm">
-                        <Users className="h-4 w-4 mr-2" />
-                        View Responses
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Clock className="h-4 w-4 mr-2" />
-                        Extend Deadline
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="evaluation" className="space-y-4">
+        <TabsContent value="responses" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Response Evaluation</CardTitle>
+              <CardTitle>Supplier Responses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {rfqs.filter(r => r.status === 'Evaluation').map((rfq) => (
-                  <div key={rfq.id} className="p-4 border rounded">
-                    <div className="flex justify-between items-start mb-2">
+                {rfqs.filter(r => r.responsesReceived > 0).map((rfq) => (
+                  <div key={rfq.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold">{rfq.title}</h4>
                         <p className="text-sm text-muted-foreground">{rfq.rfqNumber}</p>
+                        <p className="text-sm">Responses: {rfq.responsesReceived}/{rfq.suppliersInvited}</p>
                       </div>
-                      <Badge className={getStatusColor(rfq.status)}>
-                        {rfq.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm mb-3">
-                      {rfq.responsesReceived} responses received from {rfq.totalSuppliers} suppliers
-                    </p>
-                    <div className="flex space-x-2">
-                      <Button size="sm">Compare Responses</Button>
-                      <Button size="sm" variant="outline">Technical Evaluation</Button>
-                      <Button size="sm" variant="outline">Award Contract</Button>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Responses
+                        </Button>
+                        <Button size="sm">
+                          <Award className="h-4 w-4 mr-2" />
+                          Evaluate
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -339,53 +277,45 @@ const RFQManagement: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>RFQ Performance</CardTitle>
+                <CardTitle>RFQ Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="p-4 border rounded">
-                    <h4 className="font-semibold mb-2">Monthly Statistics</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Total RFQs:</span>
-                        <span className="font-medium">{rfqs.length}</span>
+                  {['Draft', 'Published', 'Response Period', 'Evaluation', 'Awarded', 'Cancelled'].map((status) => {
+                    const count = rfqs.filter(r => r.status === status).length;
+                    return (
+                      <div key={status} className="flex justify-between">
+                        <span>{status}</span>
+                        <span className="font-medium">{count}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Response Rate:</span>
-                        <span className="font-medium">78%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Avg. Suppliers per RFQ:</span>
-                        <span className="font-medium">7.2</span>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Category Distribution</CardTitle>
+                <CardTitle>Response Rates</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {['Technology', 'Furniture', 'Services', 'Manufacturing'].map((category) => {
-                    const count = rfqs.filter(r => r.category === category).length;
-                    const percentage = rfqs.length > 0 ? Math.round((count / rfqs.length) * 100) : 0;
+                  {rfqs.map((rfq) => {
+                    const responseRate = rfq.suppliersInvited > 0 ? 
+                      Math.round((rfq.responsesReceived / rfq.suppliersInvited) * 100) : 0;
                     return (
-                      <div key={category} className="space-y-1">
+                      <div key={rfq.id} className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span>{category}</span>
-                          <span>{count} ({percentage}%)</span>
+                          <span>{rfq.rfqNumber}</span>
+                          <span>{responseRate}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${percentage}%` }}
+                            style={{ width: `${responseRate}%` }}
                           ></div>
                         </div>
                       </div>
