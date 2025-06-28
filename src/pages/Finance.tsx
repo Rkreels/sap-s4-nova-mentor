@@ -16,7 +16,12 @@ import {
   Wallet, 
   CreditCard, 
   Coins,
-  Users 
+  Users,
+  Package,
+  Calculator,
+  TrendingUp,
+  Building2,
+  Shield
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import FinancialKPIs from './Finance/components/FinancialKPIs';
@@ -29,7 +34,7 @@ const Finance: React.FC = () => {
   
   useEffect(() => {
     if (isEnabled) {
-      speak("Welcome to the Finance module. This area provides access to all financial management functions, including general ledger, accounts payable, accounts receivable, and financial reporting.");
+      speak("Welcome to the Finance module. This area provides access to all financial management functions, including general ledger, accounts payable, accounts receivable, and financial reporting with real-time SAP S/4HANA Universal Journal integration.");
     }
   }, [isEnabled, speak]);
 
@@ -41,13 +46,13 @@ const Finance: React.FC = () => {
     <div className="container mx-auto p-6 space-y-8">
       <PageHeader 
         title="Financial Management"
-        description="Manage financial operations, accounting, reporting, and treasury functions"
-        voiceIntroduction="Welcome to Financial Management. Here you can manage all financial operations."
+        description="Comprehensive SAP S/4HANA Finance with Universal Journal, real-time reporting, and integrated planning"
+        voiceIntroduction="Welcome to Financial Management with comprehensive SAP S/4HANA capabilities."
       />
 
       <FinancialKPIs />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <Card className="col-span-1 p-6">
           <div className="flex items-center mb-6">
             <div className="bg-blue-100 p-3 rounded-lg mr-4">
@@ -72,15 +77,47 @@ const Finance: React.FC = () => {
               <span>Accounts Receivable</span>
               <ArrowRight className="h-4 w-4" />
             </button>
+            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
+                    onClick={() => handleNavigation('fixed-assets')}>
+              <span>Fixed Assets</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </Card>
 
         <Card className="col-span-1 p-6">
           <div className="flex items-center mb-6">
             <div className="bg-green-100 p-3 rounded-lg mr-4">
-              <Wallet className="h-6 w-6 text-green-600" />
+              <Calculator className="h-6 w-6 text-green-600" />
             </div>
-            <h2 className="text-xl font-semibold">Treasury Management</h2>
+            <h2 className="text-xl font-semibold">Management Accounting</h2>
+          </div>
+          
+          <div className="space-y-3">
+            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
+                    onClick={() => handleNavigation('cost-accounting')}>
+              <span>Cost Accounting</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
+                    onClick={() => handleNavigation('budget-planning')}>
+              <span>Budget Planning</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
+                    onClick={() => handleNavigation('consolidation')}>
+              <span>Consolidation</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </Card>
+
+        <Card className="col-span-1 p-6">
+          <div className="flex items-center mb-6">
+            <div className="bg-purple-100 p-3 rounded-lg mr-4">
+              <Wallet className="h-6 w-6 text-purple-600" />
+            </div>
+            <h2 className="text-xl font-semibold">Treasury & Risk</h2>
           </div>
           
           <div className="space-y-3">
@@ -90,13 +127,8 @@ const Finance: React.FC = () => {
               <ArrowRight className="h-4 w-4" />
             </button>
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleNavigation('bank-accounts')}>
-              <span>Bank Account Management</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleNavigation('liquidity-forecasting')}>
-              <span>Liquidity Forecasting</span>
+                    onClick={() => handleNavigation('tax-management')}>
+              <span>Tax Management</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -104,26 +136,16 @@ const Finance: React.FC = () => {
 
         <Card className="col-span-1 p-6">
           <div className="flex items-center mb-6">
-            <div className="bg-purple-100 p-3 rounded-lg mr-4">
-              <BarChart2 className="h-6 w-6 text-purple-600" />
+            <div className="bg-orange-100 p-3 rounded-lg mr-4">
+              <BarChart2 className="h-6 w-6 text-orange-600" />
             </div>
-            <h2 className="text-xl font-semibold">Financial Analytics</h2>
+            <h2 className="text-xl font-semibold">Reporting & Analytics</h2>
           </div>
           
           <div className="space-y-3">
             <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleNavigation('financial-reports')}>
-              <span>Financial Reports</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleNavigation('profitability-analysis')}>
-              <span>Profitability Analysis</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button className="w-full text-left py-2 px-3 hover:bg-gray-50 rounded text-sm font-medium flex items-center justify-between"
-                    onClick={() => handleNavigation('financial-planning')}>
-              <span>Financial Planning</span>
+                    onClick={() => handleNavigation('financial-reporting')}>
+              <span>Financial Reporting</span>
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
