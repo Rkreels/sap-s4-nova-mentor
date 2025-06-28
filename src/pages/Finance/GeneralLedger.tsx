@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -246,8 +245,7 @@ const GeneralLedger: React.FC = () => {
                   </div>
                 ))}
                 <div className="grid grid-cols-4 gap-4 pt-2 border-t font-semibold">
-                  <div colSpan={2}>Total</div>
-                  <div></div>
+                  <div className="col-span-2">Total</div>
                   <div className="text-right">$210,000</div>
                   <div className="text-right">$210,000</div>
                 </div>
