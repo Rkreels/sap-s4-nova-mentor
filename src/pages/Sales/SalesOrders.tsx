@@ -1,645 +1,607 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Search, Plus, Filter, Edit, Trash2, Eye, Download, Upload, FileText, Truck, Package } from 'lucide-react';
-import { Input } from '../../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import { useToast } from '../../hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Textarea } from '../../components/ui/textarea';
-import DataTable from '../../components/data/DataTable';
-import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ArrowLeft, Plus, Edit, Eye, FileText, Truck, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import PageHeader from '../../components/page/PageHeader';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
+import { useToast } from '../../hooks/use-toast';
+import VoiceTrainingComponent from '../../components/procurement/VoiceTrainingComponent';
 
 interface SalesOrder {
   id: string;
+  orderNumber: string;
   customer: string;
-  customerId: string;
-  status: 'Draft' | 'Pending' | 'Confirmed' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  customerPO: string;
   orderDate: string;
   deliveryDate: string;
   totalAmount: number;
   currency: string;
-  salesRep: string;
+  status: 'Draft' | 'Confirmed' | 'In Progress' | 'Delivered' | 'Invoiced' | 'Completed' | 'Cancelled';
   priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-  items: OrderItem[];
-  shippingAddress: string;
+  salesRep: string;
   paymentTerms: string;
-  notes: string;
+  shippingMethod: string;
+  lineItems: number;
 }
 
-interface OrderItem {
+interface OrderLine {
   id: string;
-  productId: string;
-  productName: string;
+  lineNumber: number;
+  product: string;
+  description: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  deliveryStatus: string;
+  deliveryDate: string;
+  status: 'Open' | 'Confirmed' | 'Shipped' | 'Delivered';
 }
 
 const SalesOrders: React.FC = () => {
+  const navigate = useNavigate();
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('orders');
-  const [orders, setOrders] = useState<SalesOrder[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [isLoading, setIsLoading] = useState(true);
+  const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isEnabled) {
+      speak('Welcome to Sales Orders Management. Create, track, and manage sales orders from quotation to delivery with comprehensive order fulfillment tracking.');
+    }
+  }, [isEnabled, speak]);
 
   useEffect(() => {
     const sampleOrders: SalesOrder[] = [
       {
-        id: 'SO-2025-001',
+        id: 'so-001',
+        orderNumber: 'SO-2025-001',
         customer: 'Acme Corporation',
-        customerId: 'CUST-001',
-        status: 'Processing',
-        orderDate: '2025-05-20',
-        deliveryDate: '2025-06-05',
-        totalAmount: 24500,
+        customerPO: 'PO-ACM-2025-001',
+        orderDate: '2025-01-25',
+        deliveryDate: '2025-02-15',
+        totalAmount: 125000.00,
         currency: 'USD',
-        salesRep: 'Sarah Johnson',
+        status: 'Confirmed',
         priority: 'High',
-        items: [
-          {
-            id: '1',
-            productId: 'PROD-001',
-            productName: 'Industrial Machine A',
-            quantity: 2,
-            unitPrice: 10000,
-            totalPrice: 20000,
-            deliveryStatus: 'In Stock'
-          },
-          {
-            id: '2',
-            productId: 'PROD-002',
-            productName: 'Maintenance Kit',
-            quantity: 5,
-            unitPrice: 900,
-            totalPrice: 4500,
-            deliveryStatus: 'In Stock'
-          }
-        ],
-        shippingAddress: '123 Industrial Blvd, New York, NY 10001',
+        salesRep: 'John Smith',
         paymentTerms: 'Net 30',
-        notes: 'Priority delivery required'
+        shippingMethod: 'Standard Shipping',
+        lineItems: 5
       },
       {
-        id: 'SO-2025-002',
+        id: 'so-002',
+        orderNumber: 'SO-2025-002',
         customer: 'TechSolutions Inc',
-        customerId: 'CUST-002',
-        status: 'Confirmed',
-        orderDate: '2025-05-18',
-        deliveryDate: '2025-06-02',
-        totalAmount: 15750,
+        customerPO: 'PO-TS-2025-002',
+        orderDate: '2025-01-28',
+        deliveryDate: '2025-02-20',
+        totalAmount: 85000.00,
         currency: 'USD',
-        salesRep: 'Mike Wilson',
+        status: 'In Progress',
         priority: 'Medium',
-        items: [
-          {
-            id: '1',
-            productId: 'PROD-003',
-            productName: 'Software License',
-            quantity: 10,
-            unitPrice: 1500,
-            totalPrice: 15000,
-            deliveryStatus: 'Digital'
-          },
-          {
-            id: '2',
-            productId: 'PROD-004',
-            productName: 'Support Package',
-            quantity: 1,
-            unitPrice: 750,
-            totalPrice: 750,
-            deliveryStatus: 'Service'
-          }
-        ],
-        shippingAddress: '456 Tech Street, San Francisco, CA 94105',
+        salesRep: 'Sarah Johnson',
+        paymentTerms: 'Net 15',
+        shippingMethod: 'Express Shipping',
+        lineItems: 3
+      },
+      {
+        id: 'so-003',
+        orderNumber: 'SO-2025-003',
+        customer: 'Global Manufacturing',
+        customerPO: 'PO-GM-2025-003',
+        orderDate: '2025-01-20',
+        deliveryDate: '2025-02-10',
+        totalAmount: 250000.00,
+        currency: 'USD',
+        status: 'Delivered',
+        priority: 'Urgent',
+        salesRep: 'Mike Davis',
         paymentTerms: 'Net 45',
-        notes: 'Include installation guide'
+        shippingMethod: 'Freight',
+        lineItems: 10
       }
     ];
+    setSalesOrders(sampleOrders);
 
-    setTimeout(() => {
-      setOrders(sampleOrders);
-      setIsLoading(false);
-    }, 1000);
+    const sampleLines: OrderLine[] = [
+      {
+        id: 'line-001',
+        lineNumber: 10,
+        product: 'PROD-001',
+        description: 'Professional Server Rack',
+        quantity: 5,
+        unitPrice: 2450.00,
+        totalPrice: 12250.00,
+        deliveryDate: '2025-02-15',
+        status: 'Confirmed'
+      },
+      {
+        id: 'line-002',
+        lineNumber: 20,
+        product: 'PROD-002',
+        description: 'Enterprise Database License',
+        quantity: 10,
+        unitPrice: 1285.00,
+        totalPrice: 12850.00,
+        deliveryDate: '2025-02-15',
+        status: 'Confirmed'
+      }
+    ];
+    setOrderLines(sampleLines);
   }, []);
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || order.status.toLowerCase() === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
-
-  const handleCreateOrder = () => {
-    setSelectedOrder(null);
-    setIsEditing(false);
-    setIsDialogOpen(true);
+  const getStatusColor = (status: string) => {
+    const colors = {
+      'Draft': 'bg-gray-100 text-gray-800',
+      'Confirmed': 'bg-blue-100 text-blue-800',
+      'In Progress': 'bg-yellow-100 text-yellow-800',
+      'Delivered': 'bg-green-100 text-green-800',
+      'Invoiced': 'bg-purple-100 text-purple-800',
+      'Completed': 'bg-emerald-100 text-emerald-800',
+      'Cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleEditOrder = (order: SalesOrder) => {
-    setSelectedOrder(order);
-    setIsEditing(true);
-    setIsDialogOpen(true);
+  const getPriorityColor = (priority: string) => {
+    const colors = {
+      'Low': 'bg-green-100 text-green-800',
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'High': 'bg-orange-100 text-orange-800',
+      'Urgent': 'bg-red-100 text-red-800'
+    };
+    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleDeleteOrder = (orderId: string) => {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
-    toast({
-      title: 'Order Deleted',
-      description: 'Sales order has been successfully removed.',
-    });
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return <FileText className="h-4 w-4" />;
+      case 'Confirmed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'In Progress':
+        return <Clock className="h-4 w-4" />;
+      case 'Delivered':
+        return <Truck className="h-4 w-4" />;
+      case 'Urgent':
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: SalesOrder['status']) => {
-    setOrders(prev => prev.map(o => 
-      o.id === orderId ? { ...o, status: newStatus } : o
-    ));
-    toast({
-      title: 'Status Updated',
-      description: `Order status changed to ${newStatus}`,
-    });
-  };
-
-  const orderColumns = [
-    { key: 'id', header: 'Order ID' },
-    { key: 'customer', header: 'Customer' },
-    { key: 'orderDate', header: 'Order Date' },
-    { key: 'deliveryDate', header: 'Delivery Date' },
+  const columns: EnhancedColumn[] = [
+    { key: 'orderNumber', header: 'Order Number', sortable: true, searchable: true },
+    { key: 'customer', header: 'Customer', searchable: true },
+    { key: 'customerPO', header: 'Customer PO', searchable: true },
     { 
       key: 'totalAmount', 
       header: 'Total Amount',
+      sortable: true,
       render: (value: number, row: SalesOrder) => `${row.currency} ${value.toLocaleString()}`
     },
     { 
       key: 'status', 
       header: 'Status',
+      filterable: true,
+      filterOptions: [
+        { label: 'Draft', value: 'Draft' },
+        { label: 'Confirmed', value: 'Confirmed' },
+        { label: 'In Progress', value: 'In Progress' },
+        { label: 'Delivered', value: 'Delivered' },
+        { label: 'Invoiced', value: 'Invoiced' },
+        { label: 'Completed', value: 'Completed' },
+        { label: 'Cancelled', value: 'Cancelled' }
+      ],
       render: (value: string) => (
-        <Badge variant={
-          value === 'Delivered' ? 'default' : 
-          value === 'Processing' || value === 'Shipped' ? 'secondary' : 
-          value === 'Cancelled' ? 'destructive' : 'outline'
-        }>
-          {value}
+        <Badge className={getStatusColor(value)}>
+          {getStatusIcon(value)}
+          <span className="ml-1">{value}</span>
         </Badge>
       )
     },
     { 
       key: 'priority', 
       header: 'Priority',
+      filterable: true,
+      filterOptions: [
+        { label: 'Low', value: 'Low' },
+        { label: 'Medium', value: 'Medium' },
+        { label: 'High', value: 'High' },
+        { label: 'Urgent', value: 'Urgent' }
+      ],
       render: (value: string) => (
-        <Badge variant={
-          value === 'Urgent' || value === 'High' ? 'destructive' : 
-          value === 'Medium' ? 'secondary' : 'outline'
-        }>
+        <Badge className={getPriorityColor(value)}>
           {value}
         </Badge>
       )
     },
+    { key: 'orderDate', header: 'Order Date', sortable: true },
+    { key: 'deliveryDate', header: 'Delivery Date', sortable: true },
+    { key: 'salesRep', header: 'Sales Rep', searchable: true }
+  ];
+
+  const actions: TableAction[] = [
+    {
+      label: 'View',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row: SalesOrder) => {
+        setSelectedOrder(row);
+        setActiveTab('details');
+        toast({
+          title: 'View Sales Order',
+          description: `Opening ${row.orderNumber}`,
+        });
+      },
+      variant: 'ghost'
+    },
+    {
+      label: 'Edit',
+      icon: <Edit className="h-4 w-4" />,
+      onClick: (row: SalesOrder) => {
+        toast({
+          title: 'Edit Sales Order',
+          description: `Editing ${row.orderNumber}`,
+        });
+      },
+      variant: 'ghost',
+      condition: (row: SalesOrder) => row.status === 'Draft'
+    },
+    {
+      label: 'Ship',
+      icon: <Truck className="h-4 w-4" />,
+      onClick: (row: SalesOrder) => {
+        toast({
+          title: 'Ship Order',
+          description: `Shipping ${row.orderNumber}`,
+        });
+      },
+      variant: 'ghost',
+      condition: (row: SalesOrder) => row.status === 'Confirmed'
+    }
+  ];
+
+  const lineColumns: EnhancedColumn[] = [
+    { key: 'lineNumber', header: 'Line', sortable: true },
+    { key: 'product', header: 'Product', searchable: true },
+    { key: 'description', header: 'Description', searchable: true },
+    { key: 'quantity', header: 'Quantity', sortable: true },
     { 
-      key: 'actions', 
-      header: 'Actions',
-      render: (_, row: SalesOrder) => (
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => handleEditOrder(row)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDeleteOrder(row.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <StatusMenu order={row} onStatusChange={handleUpdateStatus} />
-        </div>
+      key: 'unitPrice', 
+      header: 'Unit Price',
+      render: (value: number) => `$${value.toLocaleString()}`
+    },
+    { 
+      key: 'totalPrice', 
+      header: 'Total Price',
+      render: (value: number) => `$${value.toLocaleString()}`
+    },
+    { key: 'deliveryDate', header: 'Delivery Date', sortable: true },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value: string) => (
+        <Badge className={getStatusColor(value)}>
+          {value}
+        </Badge>
       )
     }
   ];
 
-  const orderMetrics = [
-    { name: 'Total Orders', value: orders.length, change: '+8%' },
-    { name: 'Processing', value: orders.filter(o => o.status === 'Processing').length, change: '+12%' },
-    { name: 'Total Value', value: `$${orders.reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()}`, change: '+15%' },
-    { name: 'Avg Order Value', value: `$${Math.round(orders.reduce((sum, o) => sum + o.totalAmount, 0) / orders.length).toLocaleString()}`, change: '+7%' }
-  ];
-
-  const monthlyData = [
-    { month: 'Jan', orders: 45, value: 125000 },
-    { month: 'Feb', orders: 52, value: 142000 },
-    { month: 'Mar', orders: 48, value: 138000 },
-    { month: 'Apr', orders: 61, value: 165000 },
-    { month: 'May', orders: 55, value: 158000 },
-  ];
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Sales Orders</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleCreateOrder}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Order
-          </Button>
-        </div>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mr-4"
+          onClick={() => navigate('/sales')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <PageHeader
+          title="Sales Orders"
+          description="Create, track, and manage sales orders from quotation to delivery"
+          voiceIntroduction="Welcome to Sales Orders Management for comprehensive order fulfillment tracking."
+        />
       </div>
 
+      <VoiceTrainingComponent 
+        module="sales"
+        topic="Sales Order Management"
+        examples={[
+          "Creating sales orders from approved quotations with customer master data integration and pricing determination",
+          "Managing order fulfillment process with inventory allocation, shipping coordination, and delivery tracking",
+          "Processing order changes and amendments with proper approval workflows and customer communication"
+        ]}
+        detailLevel="advanced"
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {orderMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div className="text-sm text-muted-foreground">{metric.name}</div>
-              <div className="text-sm text-green-600">{metric.change}</div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{salesOrders.length}</div>
+            <div className="text-sm text-muted-foreground">Total Orders</div>
+            <div className="text-sm text-blue-600">This month</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {salesOrders.filter(so => so.status === 'Confirmed').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Confirmed Orders</div>
+            <div className="text-sm text-green-600">Ready to ship</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {salesOrders.filter(so => so.priority === 'Urgent').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Urgent Orders</div>
+            <div className="text-sm text-red-600">High priority</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              ${salesOrders.reduce((sum, so) => sum + so.totalAmount, 0).toLocaleString()}
+            </div>
+            <div className="text-sm text-muted-foreground">Total Value</div>
+            <div className="text-sm text-purple-600">Outstanding</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="orders">Orders</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="orders">Sales Orders</TabsTrigger>
+          <TabsTrigger value="create">Create Order</TabsTrigger>
+          <TabsTrigger value="details">Order Details</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="fulfillment">Fulfillment</TabsTrigger>
-          <TabsTrigger value="shipping">Shipping</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Sales Orders</CardTitle>
+              <CardTitle className="flex justify-between items-center">
+                Sales Orders
+                <Button onClick={() => setActiveTab('create')}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Order
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between mb-4">
-                <div className="flex space-x-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search orders..." 
-                      className="pl-8 w-80"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by status" />
+              <EnhancedDataTable 
+                columns={columns}
+                data={salesOrders}
+                actions={actions}
+                searchPlaceholder="Search sales orders..."
+                exportable={true}
+                refreshable={true}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="create" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Sales Order</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customer">Customer</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select customer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="shipped">Shipped</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="acme">Acme Corporation</SelectItem>
+                      <SelectItem value="tech">TechSolutions Inc</SelectItem>
+                      <SelectItem value="global">Global Manufacturing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="customerPO">Customer PO</Label>
+                  <Input id="customerPO" placeholder="Enter customer PO number" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="orderDate">Order Date</Label>
+                  <Input id="orderDate" type="date" />
+                </div>
+                <div>
+                  <Label htmlFor="deliveryDate">Delivery Date</Label>
+                  <Input id="deliveryDate" type="date" />
+                </div>
+                <div>
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              {isLoading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="salesRep">Sales Representative</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select sales rep" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="john">John Smith</SelectItem>
+                      <SelectItem value="sarah">Sarah Johnson</SelectItem>
+                      <SelectItem value="mike">Mike Davis</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : (
-                <DataTable columns={orderColumns} data={filteredOrders} />
-              )}
+                <div>
+                  <Label htmlFor="paymentTerms">Payment Terms</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="net15">Net 15</SelectItem>
+                      <SelectItem value="net30">Net 30</SelectItem>
+                      <SelectItem value="net45">Net 45</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline">Save Draft</Button>
+                <Button>Create Order</Button>
+              </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="details" className="space-y-4">
+          {selectedOrder ? (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    Order Details: {selectedOrder.orderNumber}
+                    <Badge className={getStatusColor(selectedOrder.status)}>
+                      {selectedOrder.status}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div><strong>Customer:</strong> {selectedOrder.customer}</div>
+                      <div><strong>Customer PO:</strong> {selectedOrder.customerPO}</div>
+                      <div><strong>Order Date:</strong> {selectedOrder.orderDate}</div>
+                      <div><strong>Delivery Date:</strong> {selectedOrder.deliveryDate}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div><strong>Sales Rep:</strong> {selectedOrder.salesRep}</div>
+                      <div><strong>Payment Terms:</strong> {selectedOrder.paymentTerms}</div>
+                      <div><strong>Total Amount:</strong> {selectedOrder.currency} {selectedOrder.totalAmount.toLocaleString()}</div>
+                      <div><strong>Priority:</strong> 
+                        <Badge className={`ml-2 ${getPriorityColor(selectedOrder.priority)}`}>
+                          {selectedOrder.priority}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Lines</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EnhancedDataTable 
+                    columns={lineColumns}
+                    data={orderLines}
+                    searchPlaceholder="Search order lines..."
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">Select an order from the Orders tab to view details</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Order Trends</CardTitle>
+                <CardTitle>Order Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={monthlyData}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="orders" stroke="#8884d8" name="Orders" />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {['Draft', 'Confirmed', 'In Progress', 'Delivered', 'Invoiced', 'Completed'].map((status) => {
+                    const count = salesOrders.filter(order => order.status === status).length;
+                    const percentage = (count / salesOrders.length) * 100;
+                    return (
+                      <div key={status} className="flex justify-between items-center">
+                        <span>{status}</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full" 
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm">{count}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Revenue</CardTitle>
+                <CardTitle>Priority Analysis</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyData}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
-                    <Bar dataKey="value" fill="#82ca9d" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {['Urgent', 'High', 'Medium', 'Low'].map((priority) => {
+                    const orders = salesOrders.filter(order => order.priority === priority);
+                    const totalValue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+                    return (
+                      <div key={priority} className="flex justify-between items-center p-3 border rounded">
+                        <div>
+                          <span className="font-medium">{priority} Priority</span>
+                          <p className="text-sm text-muted-foreground">{orders.length} orders</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">${totalValue.toLocaleString()}</div>
+                          <Badge className={getPriorityColor(priority)}>
+                            {priority}
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="fulfillment" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Package className="h-5 w-5 mr-2" />
-                  Ready to Ship
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'Confirmed').length}
-                </div>
-                <p className="text-sm text-muted-foreground">Orders awaiting shipment</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Truck className="h-5 w-5 mr-2" />
-                  In Transit
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'Shipped').length}
-                </div>
-                <p className="text-sm text-muted-foreground">Orders being delivered</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Pending Items
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'Processing').length}
-                </div>
-                <p className="text-sm text-muted-foreground">Orders being processed</p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="shipping" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {orders.filter(o => o.status === 'Confirmed' || o.status === 'Shipped').map(order => (
-                  <div key={order.id} className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{order.id}</div>
-                      <div className="text-sm text-muted-foreground">{order.customer}</div>
-                      <div className="text-sm">Delivery: {order.deliveryDate}</div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Badge variant={order.status === 'Shipped' ? 'default' : 'secondary'}>
-                        {order.status}
-                      </Badge>
-                      <Button size="sm" variant="outline">
-                        Track
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Sales Performance</span>
-                  <span className="text-xs text-muted-foreground">Monthly analysis</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Order Fulfillment</span>
-                  <span className="text-xs text-muted-foreground">Delivery metrics</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Customer Orders</span>
-                  <span className="text-xs text-muted-foreground">By customer analysis</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
-                  <span>Product Performance</span>
-                  <span className="text-xs text-muted-foreground">Best selling items</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Sales Order' : 'Create New Sales Order'}</DialogTitle>
-          </DialogHeader>
-          <OrderForm 
-            order={selectedOrder}
-            onSave={(orderData) => {
-              if (isEditing && selectedOrder) {
-                setOrders(prev => prev.map(o => 
-                  o.id === selectedOrder.id ? { ...o, ...orderData } : o
-                ));
-                toast({ title: 'Order Updated', description: 'Sales order has been successfully updated.' });
-              } else {
-                const newOrder: SalesOrder = {
-                  id: `SO-2025-${String(orders.length + 1).padStart(3, '0')}`,
-                  orderDate: new Date().toISOString().split('T')[0],
-                  items: [],
-                  ...orderData as SalesOrder
-                };
-                setOrders(prev => [...prev, newOrder]);
-                toast({ title: 'Order Created', description: 'New sales order has been successfully created.' });
-              }
-              setIsDialogOpen(false);
-            }}
-            onCancel={() => setIsDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-};
-
-const StatusMenu: React.FC<{
-  order: SalesOrder;
-  onStatusChange: (orderId: string, status: SalesOrder['status']) => void;
-}> = ({ order, onStatusChange }) => {
-  const statuses: SalesOrder['status'][] = ['Draft', 'Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-  
-  return (
-    <Select value={order.status} onValueChange={(value) => onStatusChange(order.id, value as SalesOrder['status'])}>
-      <SelectTrigger className="w-32 h-8">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {statuses.map(status => (
-          <SelectItem key={status} value={status}>{status}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-};
-
-const OrderForm: React.FC<{
-  order: SalesOrder | null;
-  onSave: (data: Partial<SalesOrder>) => void;
-  onCancel: () => void;
-}> = ({ order, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    customer: order?.customer || '',
-    customerId: order?.customerId || '',
-    status: order?.status || 'Draft',
-    deliveryDate: order?.deliveryDate || '',
-    totalAmount: order?.totalAmount || 0,
-    currency: order?.currency || 'USD',
-    salesRep: order?.salesRep || '',
-    priority: order?.priority || 'Medium',
-    shippingAddress: order?.shippingAddress || '',
-    paymentTerms: order?.paymentTerms || 'Net 30',
-    notes: order?.notes || ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="customer">Customer</Label>
-          <Input
-            id="customer"
-            value={formData.customer}
-            onChange={(e) => setFormData(prev => ({ ...prev, customer: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="deliveryDate">Delivery Date</Label>
-          <Input
-            id="deliveryDate"
-            type="date"
-            value={formData.deliveryDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="totalAmount">Total Amount</Label>
-          <Input
-            id="totalAmount"
-            type="number"
-            value={formData.totalAmount}
-            onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="currency">Currency</Label>
-          <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="EUR">EUR</SelectItem>
-              <SelectItem value="GBP">GBP</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="priority">Priority</Label>
-          <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value as any }))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Low">Low</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="salesRep">Sales Representative</Label>
-          <Input
-            id="salesRep"
-            value={formData.salesRep}
-            onChange={(e) => setFormData(prev => ({ ...prev, salesRep: e.target.value }))}
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="shippingAddress">Shipping Address</Label>
-        <Textarea
-          id="shippingAddress"
-          value={formData.shippingAddress}
-          onChange={(e) => setFormData(prev => ({ ...prev, shippingAddress: e.target.value }))}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-        />
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          Save Order
-        </Button>
-      </div>
-    </form>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sales from './Sales';
@@ -22,23 +21,14 @@ import NotFound from '../pages/NotFound';
 const SalesRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route index element={<Sales />} />
-      <Route path="customers" element={<CustomerManagement />} />
-      <Route path="customer/:customerId" element={<CustomerDetail />} />
-      <Route path="orders" element={<SalesOrders />} />
-      <Route path="order/:orderId" element={<SalesOrderDetail />} />
-      <Route path="quotations" element={<QuotationManagement />} />
-      <Route path="contracts" element={<SalesContracts />} />
-      <Route path="pricing" element={<PricingManagement />} />
-      <Route path="products" element={<ProductCatalog />} />
-      <Route path="product/:productId" element={<ProductDetail />} />
-      <Route path="billing" element={<BillingDocuments />} />
-      <Route path="credit-management" element={<CreditManagement />} />
-      <Route path="returns" element={<SalesReturns />} />
-      <Route path="commission" element={<Commission />} />
-      <Route path="territory" element={<TerritoryManagement />} />
-      <Route path="analytics" element={<SalesAnalytics />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="/" element={<Sales />} />
+      <Route path="/sales-orders" element={<SalesOrders />} />
+      <Route path="/quotations" element={<QuotationManagement />} />
+      <Route path="/customer-management" element={<CustomerManagement />} />
+      <Route path="/pricing-management" element={<PricingManagement />} />
+      <Route path="/product-catalog" element={<ProductCatalog />} />
+      <Route path="/credit-management" element={<CreditManagement />} />
+      <Route path="/sales-analytics" element={<SalesAnalytics />} />
     </Routes>
   );
 };
