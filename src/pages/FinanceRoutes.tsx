@@ -1,35 +1,32 @@
 
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Finance from './Finance';
 import GeneralLedger from './Finance/GeneralLedger';
 import AccountsPayable from './Finance/AccountsPayable';
 import AccountsReceivable from './Finance/AccountsReceivable';
+import FixedAssets from './Finance/FixedAssets';
+import CostAccounting from './Finance/CostAccounting';
+import BudgetPlanning from './Finance/BudgetPlanning';
 import CashManagement from './Finance/CashManagement';
-import BankAccounts from './Finance/BankAccounts';
-import FinancialReports from './Finance/FinancialReports';
-import AssetAccounting from './Finance/AssetAccounting';
-import CostCenterAccounting from './Finance/CostCenterAccounting';
-import ProfitCenterAccounting from './Finance/ProfitCenterAccounting';
-import FinancialPlanning from './Finance/FinancialPlanning';
-import Treasury from './Finance/Treasury';
-import FinanceCreditManagement from './Finance/FinanceCreditManagement';
+import TaxManagement from './Finance/TaxManagement';
+import FinancialReporting from './Finance/FinancialReporting';
+import Consolidation from './Finance/Consolidation';
 
-const FinanceRoutes = () => {
+const FinanceRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route index element={<Finance />} />
-      <Route path="general-ledger" element={<GeneralLedger />} />
-      <Route path="accounts-payable" element={<AccountsPayable />} />
-      <Route path="accounts-receivable" element={<AccountsReceivable />} />
-      <Route path="cash-management" element={<CashManagement />} />
-      <Route path="bank-accounts" element={<BankAccounts />} />
-      <Route path="asset-accounting" element={<AssetAccounting />} />
-      <Route path="cost-center" element={<CostCenterAccounting />} />
-      <Route path="profit-center" element={<ProfitCenterAccounting />} />
-      <Route path="planning" element={<FinancialPlanning />} />
-      <Route path="treasury" element={<Treasury />} />
-      <Route path="credit-management" element={<FinanceCreditManagement />} />
-      <Route path="reports" element={<FinancialReports />} />
+      <Route path="/" element={<Finance />} />
+      <Route path="/general-ledger" element={<GeneralLedger />} />
+      <Route path="/accounts-payable" element={<AccountsPayable />} />
+      <Route path="/accounts-receivable" element={<AccountsReceivable />} />
+      <Route path="/fixed-assets" element={<FixedAssets />} />
+      <Route path="/cost-accounting" element={<CostAccounting />} />
+      <Route path="/budget-planning" element={<BudgetPlanning />} />
+      <Route path="/cash-management" element={<CashManagement />} />
+      <Route path="/tax-management" element={<TaxManagement />} />
+      <Route path="/financial-reporting" element={<FinancialReporting />} />
+      <Route path="/consolidation" element={<Consolidation />} />
     </Routes>
   );
 };

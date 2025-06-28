@@ -3,20 +3,20 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ArrowLeft, DollarSign, TrendingUp, CreditCard, Banknote } from 'lucide-react';
+import { ArrowLeft, Calculator, TrendingUp, Target, BarChart3 } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import VoiceTrainingComponent from '../../components/procurement/VoiceTrainingComponent';
 
-const CashManagement: React.FC = () => {
+const BudgetPlanning: React.FC = () => {
   const navigate = useNavigate();
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Cash Management. Monitor cash flow, manage bank accounts, and optimize liquidity for effective treasury operations.');
+      speak('Welcome to Budget Planning. Create, manage, and monitor budgets with variance analysis and forecasting capabilities.');
     }
   }, [isEnabled, speak]);
 
@@ -32,19 +32,19 @@ const CashManagement: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
         <PageHeader
-          title="Cash Management"
-          description="Monitor cash flow, manage bank accounts, and optimize liquidity"
-          voiceIntroduction="Welcome to Cash Management for comprehensive treasury operations."
+          title="Budget Planning"
+          description="Create, manage, and monitor budgets with variance analysis"
+          voiceIntroduction="Welcome to Budget Planning for comprehensive budget management."
         />
       </div>
 
       <VoiceTrainingComponent 
         module="finance"
-        topic="Cash and Liquidity Management"
+        topic="Budget Planning and Control"
         examples={[
-          "Managing bank master data and electronic bank statements with automated reconciliation",
-          "Creating cash flow forecasts and liquidity planning with rolling forecasts and scenario analysis",
-          "Processing payments and collections with optimized payment methods and bank communication"
+          "Creating annual budgets with departmental allocations and quarterly reviews",
+          "Monitoring budget vs actual performance with variance analysis and exception reporting",
+          "Managing budget transfers, supplements, and return processes with proper approval workflows"
         ]}
         detailLevel="advanced"
       />
@@ -52,42 +52,42 @@ const CashManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <DollarSign className="h-8 w-8 mx-auto mb-2 text-green-600" />
-            <div className="text-2xl font-bold">$2.45M</div>
-            <div className="text-sm text-muted-foreground">Available Cash</div>
+            <Calculator className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold">$15.2M</div>
+            <div className="text-sm text-muted-foreground">Annual Budget</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-            <div className="text-2xl font-bold">$1.2M</div>
-            <div className="text-sm text-muted-foreground">Monthly Inflow</div>
+            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold">$12.8M</div>
+            <div className="text-sm text-muted-foreground">YTD Actual</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <CreditCard className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-            <div className="text-2xl font-bold">$980K</div>
-            <div className="text-sm text-muted-foreground">Monthly Outflow</div>
+            <Target className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold">84%</div>
+            <div className="text-sm text-muted-foreground">Budget Utilization</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Banknote className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-            <div className="text-2xl font-bold">12</div>
-            <div className="text-sm text-muted-foreground">Bank Accounts</div>
+            <BarChart3 className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+            <div className="text-2xl font-bold">+5.2%</div>
+            <div className="text-sm text-muted-foreground">Variance</div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Cash Management Overview</CardTitle>
+          <CardTitle>Budget Planning Overview</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            Cash Management provides comprehensive treasury operations including bank account management, 
-            cash flow forecasting, and liquidity optimization for effective financial operations.
+            Budget Planning provides comprehensive budgeting capabilities including budget creation, monitoring, 
+            variance analysis, and forecasting to support effective financial planning and control.
           </p>
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Full functionality coming soon...</p>
@@ -98,4 +98,4 @@ const CashManagement: React.FC = () => {
   );
 };
 
-export default CashManagement;
+export default BudgetPlanning;
