@@ -1,211 +1,263 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Download, TrendingUp, TrendingDown, Shield, Globe, AlertTriangle, BarChart3 } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Plus, 
+  DollarSign, 
+  TrendingUp, 
+  Building2, 
+  CreditCard,
+  Eye,
+  Edit,
+  Trash2,
+  Download,
+  RefreshCw
+} from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
-import DataTable, { Column } from '../../components/data/DataTable';
-import { Badge } from '../../components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../components/ui/form';
-import { useForm } from 'react-hook-form';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
+import { useToast } from '../../hooks/use-toast';
+import VoiceTrainingComponent from '../../components/procurement/VoiceTrainingComponent';
+
+interface BankAccount {
+  id: string;
+  accountNumber: string;
+  bankName: string;
+  accountType: 'Checking' | 'Savings' | 'Credit Line' | 'Investment';
+  currency: string;
+  balance: number;
+  status: 'Active' | 'Inactive' | 'Frozen';
+  lastUpdated: string;
+}
+
+interface CashPosition {
+  id: string;
+  date: string;
+  totalCash: number;
+  inflows: number;
+  outflows: number;
+  netPosition: number;
+  currency: string;
+}
+
+interface Investment {
+  id: string;
+  instrumentType: string;
+  description: string;
+  principalAmount: number;
+  currentValue: number;
+  maturityDate: string;
+  interestRate: number;
+  status: 'Active' | 'Matured' | 'Redeemed';
+}
 
 const Treasury: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('positions');
-  const [selectedPosition, setSelectedPosition] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [cashPositions, setCashPositions] = useState<CashPosition[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const form = useForm({
-    defaultValues: {
-      currency: '',
-      amount: '',
-      dealType: '',
-      counterparty: '',
-      rate: '',
-      maturityDate: ''
+  useEffect(() => {
+    if (isEnabled) {
+      speak('Welcome to Treasury Management. Manage cash positions, bank accounts, investments, and liquidity optimization with real-time treasury operations.');
     }
-  });
+  }, [isEnabled, speak]);
 
-  const [fxPositions, setFxPositions] = useState([
-    { id: 'FX-001', currency: 'USD/EUR', position: '1,250,000', spotRate: '0.8542', unrealizedPnL: '+12,450', exposure: 'Long USD', hedgeRatio: '85%', maturity: '2024-06-15', status: 'Active' },
-    { id: 'FX-002', currency: 'GBP/EUR', position: '780,000', spotRate: '1.1684', unrealizedPnL: '-8,720', exposure: 'Short GBP', hedgeRatio: '72%', maturity: '2024-07-20', status: 'Active' },
-    { id: 'FX-003', currency: 'JPY/EUR', position: '85,000,000', spotRate: '0.0064', unrealizedPnL: '+5,680', exposure: 'Long JPY', hedgeRatio: '90%', maturity: '2024-08-10', status: 'Active' },
-    { id: 'FX-004', currency: 'CHF/EUR', position: '450,000', spotRate: '0.9234', unrealizedPnL: '+3,210', exposure: 'Long CHF', hedgeRatio: '65%', maturity: '2024-06-30', status: 'Maturing Soon' }
-  ]);
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const [derivatives, setDerivatives] = useState([
-    { id: 'DER-001', instrument: 'Interest Rate Swap', notional: '10,000,000', currency: 'EUR', rate: '3.25%', maturity: '2027-05-20', counterparty: 'Goldman Sachs', mtm: '+45,670', status: 'Active' },
-    { id: 'DER-002', instrument: 'FX Forward', notional: '2,500,000', currency: 'USD', rate: '0.8550', maturity: '2024-09-15', counterparty: 'JP Morgan', mtm: '-12,340', status: 'Active' },
-    { id: 'DER-003', instrument: 'Currency Swap', notional: '5,000,000', currency: 'GBP', rate: '1.1700', maturity: '2025-12-01', counterparty: 'Barclays', mtm: '+23,890', status: 'Active' },
-    { id: 'DER-004', instrument: 'Credit Default Swap', notional: '1,000,000', currency: 'EUR', rate: '150 bps', maturity: '2026-03-15', counterparty: 'Deutsche Bank', mtm: '+8,450', status: 'Monitoring' }
-  ]);
+  const loadData = async () => {
+    setIsLoading(true);
+    
+    // Simulate API calls with sample data
+    const sampleBankAccounts: BankAccount[] = [
+      {
+        id: 'ba-001',
+        accountNumber: '****1234',
+        bankName: 'JPMorgan Chase',
+        accountType: 'Checking',
+        currency: 'USD',
+        balance: 2450000,
+        status: 'Active',
+        lastUpdated: '2025-01-28T10:30:00Z'
+      },
+      {
+        id: 'ba-002',
+        accountNumber: '****5678',
+        bankName: 'Bank of America',
+        accountType: 'Savings',
+        currency: 'USD',
+        balance: 1200000,
+        status: 'Active',
+        lastUpdated: '2025-01-28T09:15:00Z'
+      }
+    ];
 
-  const [riskMetrics, setRiskMetrics] = useState([
-    { metric: 'Value at Risk (1-day, 95%)', current: '€125,000', limit: '€150,000', utilization: '83%', trend: 'stable', status: 'Within Limit' },
-    { metric: 'Expected Shortfall', current: '€198,500', limit: '€250,000', utilization: '79%', trend: 'down', status: 'Within Limit' },
-    { metric: 'Currency Exposure', current: '€8,450,000', limit: '€10,000,000', utilization: '85%', trend: 'up', status: 'Watch' },
-    { metric: 'Interest Rate Duration', current: '2.45 years', limit: '3.0 years', utilization: '82%', trend: 'stable', status: 'Within Limit' },
-    { metric: 'Credit Exposure', current: '€2,340,000', limit: '€3,000,000', utilization: '78%', trend: 'down', status: 'Within Limit' },
-    { metric: 'Liquidity Ratio', current: '1.85', limit: '1.20', utilization: '154%', trend: 'up', status: 'Excellent' }
-  ]);
+    const sampleCashPositions: CashPosition[] = [
+      {
+        id: 'cp-001',
+        date: '2025-01-28',
+        totalCash: 3650000,
+        inflows: 850000,
+        outflows: 620000,
+        netPosition: 230000,
+        currency: 'USD'
+      },
+      {
+        id: 'cp-002',
+        date: '2025-01-27',
+        totalCash: 3420000,
+        inflows: 750000,
+        outflows: 680000,
+        netPosition: 70000,
+        currency: 'USD'
+      }
+    ];
 
-  const [marketData, setMarketData] = useState([
-    { pair: 'EUR/USD', rate: '1.0892', change: '+0.0012', changePercent: '+0.11%', bid: '1.0890', ask: '1.0894', trend: 'up' },
-    { pair: 'GBP/USD', rate: '1.2734', change: '-0.0023', changePercent: '-0.18%', bid: '1.2732', ask: '1.2736', trend: 'down' },
-    { pair: 'USD/JPY', rate: '156.24', change: '+0.45', changePercent: '+0.29%', bid: '156.22', ask: '156.26', trend: 'up' },
-    { pair: 'EUR/GBP', rate: '0.8553', change: '+0.0008', changePercent: '+0.09%', bid: '0.8551', ask: '0.8555', trend: 'up' },
-    { pair: 'USD/CHF', rate: '0.9123', change: '-0.0015', changePercent: '-0.16%', bid: '0.9121', ask: '0.9125', trend: 'down' },
-    { pair: 'AUD/USD', rate: '0.6587', change: '+0.0034', changePercent: '+0.52%', bid: '0.6585', ask: '0.6589', trend: 'up' }
-  ]);
+    const sampleInvestments: Investment[] = [
+      {
+        id: 'inv-001',
+        instrumentType: 'Certificate of Deposit',
+        description: '6-Month CD - 4.5% APY',
+        principalAmount: 500000,
+        currentValue: 511250,
+        maturityDate: '2025-07-28',
+        interestRate: 4.5,
+        status: 'Active'
+      },
+      {
+        id: 'inv-002',
+        instrumentType: 'Money Market Fund',
+        description: 'High-Yield Money Market',
+        principalAmount: 750000,
+        currentValue: 762500,
+        maturityDate: '2025-12-31',
+        interestRate: 3.8,
+        status: 'Active'
+      }
+    ];
 
-  const handleCreate = (data: any) => {
-    const newPosition = {
-      id: `FX-${String(fxPositions.length + 1).padStart(3, '0')}`,
-      ...data,
-      status: 'Active'
-    };
-    setFxPositions([...fxPositions, newPosition]);
-    setIsCreateDialogOpen(false);
-    form.reset();
+    setBankAccounts(sampleBankAccounts);
+    setCashPositions(sampleCashPositions);
+    setInvestments(sampleInvestments);
+    setIsLoading(false);
   };
 
-  const handleEdit = (position: any) => {
-    setSelectedPosition(position);
-    form.reset(position);
-    setIsEditDialogOpen(true);
+  const refreshData = () => {
+    loadData();
+    toast({
+      title: 'Data Refreshed',
+      description: 'Treasury data has been updated successfully.',
+    });
   };
 
-  const handleUpdate = (data: any) => {
-    setFxPositions(fxPositions.map(p => p.id === selectedPosition?.id ? { ...p, ...data } : p));
-    setIsEditDialogOpen(false);
-    setSelectedPosition(null);
-  };
-
-  const handleDelete = (id: string) => {
-    setFxPositions(fxPositions.filter(p => p.id !== id));
-  };
-
-  const fxColumns: Column[] = [
-    { key: 'id', header: 'Position ID' },
-    { key: 'currency', header: 'Currency Pair' },
+  const bankAccountColumns: EnhancedColumn[] = [
+    { key: 'accountNumber', header: 'Account', searchable: true },
+    { key: 'bankName', header: 'Bank', searchable: true },
+    { key: 'accountType', header: 'Type', filterable: true, filterOptions: [
+      { label: 'Checking', value: 'Checking' },
+      { label: 'Savings', value: 'Savings' },
+      { label: 'Credit Line', value: 'Credit Line' },
+      { label: 'Investment', value: 'Investment' }
+    ]},
     { 
-      key: 'position', 
-      header: 'Position Size',
-      render: (value) => (
-        <span className="font-semibold">{value}</span>
-      )
-    },
-    { key: 'spotRate', header: 'Spot Rate' },
-    { 
-      key: 'unrealizedPnL', 
-      header: 'Unrealized P&L',
-      render: (value) => (
-        <span className={`font-semibold ${value.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-          €{value}
-        </span>
-      )
-    },
-    { key: 'exposure', header: 'Exposure' },
-    { key: 'hedgeRatio', header: 'Hedge Ratio' },
-    { key: 'maturity', header: 'Maturity' },
-    { 
-      key: 'status', 
-      header: 'Status',
-      render: (value) => (
-        <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
-      )
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (_, row) => (
-        <div className="flex space-x-1">
-          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}><Edit className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}><Trash2 className="h-4 w-4" /></Button>
-        </div>
-      )
-    }
-  ];
-
-  const derivativesColumns: Column[] = [
-    { key: 'id', header: 'Deal ID' },
-    { key: 'instrument', header: 'Instrument' },
-    { 
-      key: 'notional', 
-      header: 'Notional',
-      render: (value, row) => (
-        <span className="font-semibold">{row.currency} {value}</span>
-      )
-    },
-    { key: 'rate', header: 'Rate' },
-    { key: 'maturity', header: 'Maturity' },
-    { key: 'counterparty', header: 'Counterparty' },
-    { 
-      key: 'mtm', 
-      header: 'Mark-to-Market',
-      render: (value) => (
-        <span className={`font-semibold ${value.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-          €{value}
-        </span>
-      )
+      key: 'balance', 
+      header: 'Balance',
+      sortable: true,
+      render: (value: number, row: BankAccount) => `${row.currency} ${value.toLocaleString()}`
     },
     { 
       key: 'status', 
       header: 'Status',
-      render: (value) => (
-        <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
+      render: (value: string) => (
+        <Badge className={
+          value === 'Active' ? 'bg-green-100 text-green-800' :
+          value === 'Inactive' ? 'bg-gray-100 text-gray-800' :
+          'bg-red-100 text-red-800'
+        }>
+          {value}
+        </Badge>
       )
+    }
+  ];
+
+  const bankAccountActions: TableAction[] = [
+    {
+      label: 'View',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row: BankAccount) => {
+        toast({
+          title: 'View Account',
+          description: `Opening details for ${row.accountNumber}`,
+        });
+      },
+      variant: 'ghost'
     },
     {
-      key: 'actions',
-      header: 'Actions',
-      render: (_, row) => (
-        <div className="flex space-x-1">
-          <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm"><Trash2 className="h-4 w-4" /></Button>
-        </div>
-      )
+      label: 'Reconcile',
+      icon: <RefreshCw className="h-4 w-4" />,
+      onClick: (row: BankAccount) => {
+        toast({
+          title: 'Bank Reconciliation',
+          description: `Starting reconciliation for ${row.accountNumber}`,
+        });
+      },
+      variant: 'ghost'
     }
   ];
 
-  const marketDataColumns: Column[] = [
-    { key: 'pair', header: 'Currency Pair' },
-    { key: 'rate', header: 'Rate' },
+  const investmentColumns: EnhancedColumn[] = [
+    { key: 'instrumentType', header: 'Type', searchable: true },
+    { key: 'description', header: 'Description', searchable: true },
     { 
-      key: 'change', 
-      header: 'Change',
-      render: (value, row) => (
-        <span className={`font-semibold ${value.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-          {value} ({row.changePercent})
-        </span>
-      )
+      key: 'principalAmount', 
+      header: 'Principal',
+      render: (value: number) => `$${value.toLocaleString()}`
     },
-    { key: 'bid', header: 'Bid' },
-    { key: 'ask', header: 'Ask' },
     { 
-      key: 'trend', 
-      header: 'Trend',
-      render: (value) => (
-        value === 'up' ? (
-          <TrendingUp className="h-4 w-4 text-green-600" />
-        ) : (
-          <TrendingDown className="h-4 w-4 text-red-600" />
-        )
+      key: 'currentValue', 
+      header: 'Current Value',
+      render: (value: number) => `$${value.toLocaleString()}`
+    },
+    { 
+      key: 'interestRate', 
+      header: 'Rate',
+      render: (value: number) => `${value}%`
+    },
+    { key: 'maturityDate', header: 'Maturity', sortable: true },
+    { 
+      key: 'status', 
+      header: 'Status',
+      render: (value: string) => (
+        <Badge className={
+          value === 'Active' ? 'bg-green-100 text-green-800' :
+          value === 'Matured' ? 'bg-blue-100 text-blue-800' :
+          'bg-gray-100 text-gray-800'
+        }>
+          {value}
+        </Badge>
       )
     }
   ];
 
-  const totalFxExposure = fxPositions.reduce((sum, pos) => {
-    const position = parseFloat(pos.position.replace(/,/g, ''));
-    return sum + position;
-  }, 0);
+  const totalCash = bankAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const totalInvestments = investments.reduce((sum, inv) => sum + inv.currentValue, 0);
+  const todayCashPosition = cashPositions[0] || { netPosition: 0, inflows: 0, outflows: 0 };
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -220,475 +272,243 @@ const Treasury: React.FC = () => {
         </Button>
         <PageHeader
           title="Treasury Management"
-          description="Manage FX positions, derivatives, and financial risk"
-          voiceIntroduction="Welcome to Treasury Management. Monitor foreign exchange positions, derivatives portfolio, and manage financial risk exposure."
+          description="Manage cash positions, bank accounts, and investments for optimal liquidity"
+          voiceIntroduction="Welcome to comprehensive Treasury Management with real-time cash positioning and investment tracking."
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <VoiceTrainingComponent 
+        module="finance"
+        topic="Treasury Operations"
+        examples={[
+          "Managing bank master data with automated bank statement imports and electronic reconciliation processes",
+          "Optimizing cash positioning with real-time liquidity monitoring and automated investment sweeps",
+          "Processing treasury transactions including foreign exchange hedging and investment portfolio management"
+        ]}
+        detailLevel="advanced"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Globe className="h-8 w-8 text-blue-600 mr-3" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">€{(totalFxExposure / 1000000).toFixed(1)}M</p>
-                <p className="text-xs text-muted-foreground">FX Exposure</p>
+                <div className="text-2xl font-bold">${totalCash.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Total Cash</div>
               </div>
+              <DollarSign className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <BarChart3 className="h-8 w-8 text-green-600 mr-3" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">€125K</p>
-                <p className="text-xs text-muted-foreground">Daily VaR</p>
+                <div className="text-2xl font-bold">${totalInvestments.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Investments</div>
               </div>
+              <TrendingUp className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Shield className="h-8 w-8 text-purple-600 mr-3" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">78%</p>
-                <p className="text-xs text-muted-foreground">Hedge Ratio</p>
+                <div className="text-2xl font-bold">${todayCashPosition.netPosition.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground">Net Position</div>
               </div>
+              <Building2 className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-orange-600 mr-3" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">+€41K</p>
-                <p className="text-xs text-muted-foreground">Total MTM P&L</p>
+                <div className="text-2xl font-bold">{bankAccounts.length}</div>
+                <div className="text-sm text-muted-foreground">Bank Accounts</div>
               </div>
+              <CreditCard className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="positions">FX Positions</TabsTrigger>
-          <TabsTrigger value="derivatives">Derivatives</TabsTrigger>
-          <TabsTrigger value="risk">Risk Management</TabsTrigger>
-          <TabsTrigger value="market">Market Data</TabsTrigger>
-          <TabsTrigger value="reporting">Treasury Reports</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="accounts">Bank Accounts</TabsTrigger>
+          <TabsTrigger value="investments">Investments</TabsTrigger>
+          <TabsTrigger value="forecasting">Cash Forecasting</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="positions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Foreign Exchange Positions</CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Position
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create FX Position</DialogTitle>
-                      </DialogHeader>
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="currency"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Currency Pair</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select pair" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="USD/EUR">USD/EUR</SelectItem>
-                                      <SelectItem value="GBP/EUR">GBP/EUR</SelectItem>
-                                      <SelectItem value="JPY/EUR">JPY/EUR</SelectItem>
-                                      <SelectItem value="CHF/EUR">CHF/EUR</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="amount"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Amount</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} type="number" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="dealType"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Deal Type</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select type" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="Spot">Spot</SelectItem>
-                                      <SelectItem value="Forward">Forward</SelectItem>
-                                      <SelectItem value="Swap">Swap</SelectItem>
-                                      <SelectItem value="Option">Option</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="rate"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Exchange Rate</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} type="number" step="0.0001" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <FormField
-                            control={form.control}
-                            name="counterparty"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Counterparty</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select counterparty" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Goldman Sachs">Goldman Sachs</SelectItem>
-                                    <SelectItem value="JP Morgan">JP Morgan</SelectItem>
-                                    <SelectItem value="Barclays">Barclays</SelectItem>
-                                    <SelectItem value="Deutsche Bank">Deutsche Bank</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="maturityDate"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Maturity Date</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="date" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button type="submit">Create Position</Button>
-                          </div>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cash Flow Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Today's Inflows</span>
+                    <span className="font-medium text-green-600">${todayCashPosition.inflows.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Today's Outflows</span>
+                    <span className="font-medium text-red-600">${todayCashPosition.outflows.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-semibold">Net Position</span>
+                    <span className={`font-semibold ${todayCashPosition.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ${todayCashPosition.netPosition.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable columns={fxColumns} data={fxPositions} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="derivatives" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Derivatives Portfolio</CardTitle>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Derivative
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable columns={derivativesColumns} data={derivatives} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="risk" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Risk Metrics & Limits</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {riskMetrics.map((metric, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-semibold text-sm">{metric.metric}</h4>
-                      <Badge variant={
-                        metric.status === 'Within Limit' ? 'default' : 
-                        metric.status === 'Excellent' ? 'outline' : 
-                        metric.status === 'Watch' ? 'secondary' : 'destructive'
-                      }>
-                        {metric.status}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Current: <span className="font-semibold">{metric.current}</span></span>
-                      <span>Limit: <span className="font-semibold">{metric.limit}</span></span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Utilization: <span className="font-semibold">{metric.utilization}</span></span>
-                      <div className="flex items-center">
-                        {metric.trend === 'up' ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                        ) : metric.trend === 'down' ? (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
-                        ) : (
-                          <div className="h-4 w-4 bg-gray-400 rounded-full" />
-                        )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Investment Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {investments.slice(0, 3).map((investment) => (
+                    <div key={investment.id} className="flex justify-between">
+                      <div>
+                        <div className="font-medium">{investment.instrumentType}</div>
+                        <div className="text-sm text-muted-foreground">{investment.interestRate}% APY</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">${investment.currentValue.toLocaleString()}</div>
+                        <div className="text-sm text-green-600">
+                          +${(investment.currentValue - investment.principalAmount).toLocaleString()}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="market" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Real-time Market Data</CardTitle>
-                <Badge variant="outline" className="text-green-600">
-                  Live
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable columns={marketDataColumns} data={marketData} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reporting" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Report</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Comprehensive risk analysis and exposure reports.
-                </p>
-                <Button className="w-full">Generate Risk Report</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>P&L Report</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Mark-to-market and realized P&L analysis.
-                </p>
-                <Button className="w-full">Generate P&L Report</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Position Report</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Detailed position breakdown by currency and maturity.
-                </p>
-                <Button className="w-full">Generate Position Report</Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Hedge Effectiveness</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Analysis of hedging strategy effectiveness.
-                </p>
-                <Button className="w-full">Generate Hedge Report</Button>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-      </Tabs>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit FX Position</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency Pair</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select pair" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="USD/EUR">USD/EUR</SelectItem>
-                          <SelectItem value="GBP/EUR">GBP/EUR</SelectItem>
-                          <SelectItem value="JPY/EUR">JPY/EUR</SelectItem>
-                          <SelectItem value="CHF/EUR">CHF/EUR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="dealType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deal Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Spot">Spot</SelectItem>
-                          <SelectItem value="Forward">Forward</SelectItem>
-                          <SelectItem value="Swap">Swap</SelectItem>
-                          <SelectItem value="Option">Option</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Exchange Rate</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" step="0.0001" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="counterparty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Counterparty</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select counterparty" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Goldman Sachs">Goldman Sachs</SelectItem>
-                        <SelectItem value="JP Morgan">JP Morgan</SelectItem>
-                        <SelectItem value="Barclays">Barclays</SelectItem>
-                        <SelectItem value="Deutsche Bank">Deutsche Bank</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <TabsContent value="accounts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                Bank Account Management
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={refreshData} disabled={isLoading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button onClick={() => toast({ title: 'Add Account', description: 'Opening bank account setup form' })}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Account
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EnhancedDataTable 
+                columns={bankAccountColumns}
+                data={bankAccounts}
+                actions={bankAccountActions}
+                searchPlaceholder="Search bank accounts..."
+                exportable={true}
+                refreshable={true}
+                onRefresh={refreshData}
               />
-              <FormField
-                control={form.control}
-                name="maturityDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maturity Date</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="investments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                Investment Portfolio
+                <Button onClick={() => toast({ title: 'New Investment', description: 'Opening investment entry form' })}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Investment
                 </Button>
-                <Button type="submit">Update Position</Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EnhancedDataTable 
+                columns={investmentColumns}
+                data={investments}
+                searchPlaceholder="Search investments..."
+                exportable={true}
+                refreshable={true}
+                onRefresh={refreshData}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="forecasting" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cash Flow Forecasting</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="forecastPeriod">Forecast Period</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button className="w-full">Generate Forecast</Button>
+                </div>
               </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="text-lg font-semibold">Next 7 Days</div>
+                  <div className="text-2xl font-bold text-green-600">+$125,000</div>
+                  <div className="text-sm text-muted-foreground">Projected net inflow</div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-lg font-semibold">Next 30 Days</div>
+                  <div className="text-2xl font-bold text-blue-600">+$480,000</div>
+                  <div className="text-sm text-muted-foreground">Projected net inflow</div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-lg font-semibold">Next 90 Days</div>
+                  <div className="text-2xl font-bold text-purple-600">+$1,250,000</div>
+                  <div className="text-sm text-muted-foreground">Projected net inflow</div>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
