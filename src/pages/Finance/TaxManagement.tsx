@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -494,7 +493,7 @@ const TaxManagement: React.FC = () => {
                           <div className={`font-medium ${taxReturn.status === 'Overdue' ? 'text-red-600' : 'text-blue-600'}`}>
                             {taxReturn.dueDate}
                           </div>
-                          <Badge className={getStatusColor(taxReturn.status)} size="sm">
+                          <Badge className={getStatusColor(taxReturn.status)}>
                             {taxReturn.status}
                           </Badge>
                         </div>

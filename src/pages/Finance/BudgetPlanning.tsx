@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -437,7 +436,7 @@ const BudgetPlanning: React.FC = () => {
                     <div key={budget.id} className="p-3 border rounded">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium">{budget.name}</h4>
-                        <Badge className={getStatusColor(budget.status)} size="sm">
+                        <Badge className={getStatusColor(budget.status)}>
                           {budget.status}
                         </Badge>
                       </div>
