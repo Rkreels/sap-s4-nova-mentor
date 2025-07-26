@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Search, FileText, Download, Filter, Calendar, Check, AlertCircle } from 'lucide-react';
+import { Search, FileText, Download, Filter, Calendar, Check, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Input } from '../../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
@@ -20,9 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
+import PageHeader from '../../components/page/PageHeader';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
+import VoiceTrainingComponent from '../../components/procurement/VoiceTrainingComponent';
 
 const BillingDocuments: React.FC = () => {
+  const navigate = useNavigate();
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('invoices');
+
+  useEffect(() => {
+    if (isEnabled) {
+      speak('Welcome to Billing Documents. Manage invoices, credit memos, and billing reports for comprehensive revenue tracking.');
+    }
+  }, [isEnabled, speak]);
 
   const invoices = [
     { id: 'INV0012458', customer: 'Acme Corp', orderRef: 'SO78654', date: '2025-05-15', amount: '$24,580.00', status: 'Posted', paymentStatus: 'Paid' },
@@ -65,9 +79,36 @@ const BillingDocuments: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mr-4"
+          onClick={() => navigate('/sales')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <PageHeader
+          title="Billing Documents"
+          description="Manage invoices, credit memos, and billing reports for revenue tracking"
+          voiceIntroduction="Welcome to Billing Documents for comprehensive billing management."
+        />
+      </div>
+
+      <VoiceTrainingComponent 
+        module="sales"
+        topic="Billing Documents Management"
+        examples={[
+          "Creating customer invoices from sales orders with automated tax calculations and payment terms",
+          "Processing credit memos for returns and adjustments with proper accounting integration",
+          "Generating billing reports for revenue recognition and customer payment analysis"
+        ]}
+        detailLevel="intermediate"
+      />
+
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Billing Documents</h1>
+        <h2 className="text-xl font-semibold">Billing Management</h2>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />

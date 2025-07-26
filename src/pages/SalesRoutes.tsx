@@ -29,6 +29,18 @@ const SalesRoutes: React.FC = () => {
       <Route path="/product-catalog" element={<ProductCatalog />} />
       <Route path="/credit-management" element={<CreditManagement />} />
       <Route path="/sales-analytics" element={<SalesAnalytics />} />
+      <Route path="/billing" element={<BillingDocuments />} />
+      <Route path="/billing-documents" element={<BillingDocuments />} />
+      <Route path="/sales-contracts" element={<SalesContracts />} />
+      <Route path="/contracts" element={<SalesContracts />} />
+      <Route path="/sales-returns" element={<SalesReturns />} />
+      <Route path="/returns" element={<SalesReturns />} />
+      <Route path="/commission" element={<Commission />} />
+      <Route path="/territory-management" element={<TerritoryManagement />} />
+      <Route path="/customer/:customerId" element={<CustomerDetail />} />
+      <Route path="/sales-order/:orderId" element={<SalesOrderDetail />} />
+      <Route path="/product/:productId" element={<ProductDetail />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
