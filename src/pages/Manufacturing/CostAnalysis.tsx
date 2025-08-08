@@ -73,7 +73,7 @@ const CostAnalysis: React.FC = () => {
   const form = useForm<Driver>({ resolver: zodResolver(driverSchema), defaultValues: { id: generateId('drv'), costCenter: '', driver: '', planCost: 0, actualCost: 0 } });
   const openCreate = () => { setEditing(null); form.reset({ id: generateId('drv'), costCenter: '', driver: '', planCost: 0, actualCost: 0 }); setOpen(true); };
   useEffect(() => { if (editing) form.reset(editing); }, [editing]);
-  const onSubmit = (values: Driver) => { upsertEntity<Driver>(STORAGE_KEY, values); setOpen(false); refresh(); toast({ title: editing ? 'Updated' : 'Created', description: `${values.costCenter} - ${values.driver}` }); };
+  const onSubmit = (values: Driver) => { upsertEntity(STORAGE_KEY, values as any); setOpen(false); refresh(); toast({ title: editing ? 'Updated' : 'Created', description: `${values.costCenter} - ${values.driver}` }); };
 
   const chartData = data.map((d, idx) => ({ name: d.costCenter, Plan: d.planCost, Actual: d.actualCost }));
 

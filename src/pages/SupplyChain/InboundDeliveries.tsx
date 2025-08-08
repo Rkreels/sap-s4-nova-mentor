@@ -86,7 +86,7 @@ const InboundDeliveries: React.FC = () => {
       condition: (row: Delivery) => row.status === 'Arrived' || row.status === 'In Transit',
       onClick: (row: Delivery) => {
         const updated: Delivery = { ...row, status: 'GR Posted' };
-        upsertEntity<Delivery>(STORAGE_KEY, updated as Delivery);
+        upsertEntity(STORAGE_KEY, updated as any);
         refresh();
         toast({ title: 'Goods Receipt Posted', description: `GR posted for ${row.deliveryNumber}` });
       },
@@ -131,7 +131,7 @@ const InboundDeliveries: React.FC = () => {
   }, [editing]);
 
   const onSubmit = (values: Delivery) => {
-    upsertEntity<Delivery>(STORAGE_KEY, values);
+    upsertEntity(STORAGE_KEY, values as any);
     setOpen(false);
     refresh();
     toast({ title: editing ? 'Delivery Updated' : 'Delivery Created', description: values.deliveryNumber });

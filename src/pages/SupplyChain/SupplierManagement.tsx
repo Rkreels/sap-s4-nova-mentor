@@ -65,9 +65,9 @@ const SupplierManagement: React.FC = () => {
   const actions: TableAction[] = [
     { label: 'View', icon: <Eye className="h-4 w-4" />, onClick: (row: Supplier) => toast({ title: 'View Supplier', description: `Viewing ${row.name}` }) },
     { label: 'Edit', icon: <Edit className="h-4 w-4" />, onClick: (row: Supplier) => { setEditing(row); setOpen(true); } },
-    { label: 'Activate', icon: <CheckCircle2 className="h-4 w-4" />, condition: (r: Supplier) => r.status === 'Blocked', onClick: (r: Supplier) => { upsertEntity(STORAGE_KEY, { ...r, status: 'Active' }); refresh(); toast({ title: 'Activated', description: r.name }); } },
-    { label: 'Block', icon: <Ban className="h-4 w-4" />, condition: (r: Supplier) => r.status === 'Active', onClick: (r: Supplier) => { upsertEntity(STORAGE_KEY, { ...r, status: 'Blocked' }); refresh(); toast({ title: 'Blocked', description: r.name }); } },
-    { label: 'Delete', icon: <Trash2 className="h-4 w-4" />, onClick: (row: Supplier) => { removeEntity<Supplier>(STORAGE_KEY, row.id); refresh(); toast({ title: 'Deleted', description: row.name }); }, variant: 'destructive' }
+    { label: 'Activate', icon: <CheckCircle2 className="h-4 w-4" />, condition: (r: Supplier) => r.status === 'Blocked', onClick: (r: Supplier) => { const updated: Supplier = { ...r, status: 'Active' }; upsertEntity(STORAGE_KEY, updated as any); refresh(); toast({ title: 'Activated', description: r.name }); } },
+    { label: 'Block', icon: <Ban className="h-4 w-4" />, condition: (r: Supplier) => r.status === 'Active', onClick: (r: Supplier) => { const updated: Supplier = { ...r, status: 'Blocked' }; upsertEntity(STORAGE_KEY, updated as any); refresh(); toast({ title: 'Blocked', description: r.name }); } },
+    { label: 'Delete', icon: <Trash2 className="h-4 w-4" />, onClick: (row: Supplier) => { removeEntity(STORAGE_KEY, row.id); refresh(); toast({ title: 'Deleted', description: row.name }); }, variant: 'destructive' }
   ];
 
   const form = useForm<Supplier>({
@@ -78,7 +78,7 @@ const SupplierManagement: React.FC = () => {
   const openCreate = () => { setEditing(null); form.reset({ id: generateId('sup'), name: '', category: '', email: '', phone: '', contact: '', paymentTerms: 'Net 30', status: 'Active', rating: 5 }); setOpen(true); };
   useEffect(() => { if (editing) form.reset(editing); }, [editing]);
 
-  const onSubmit = (values: Supplier) => { upsertEntity<Supplier>(STORAGE_KEY, values); setOpen(false); refresh(); toast({ title: editing ? 'Supplier Updated' : 'Supplier Created', description: values.name }); };
+  const onSubmit = (values: Supplier) => { upsertEntity(STORAGE_KEY, values as any); setOpen(false); refresh(); toast({ title: editing ? 'Supplier Updated' : 'Supplier Created', description: values.name }); };
 
   return (
     <div className="container mx-auto p-6 space-y-6">

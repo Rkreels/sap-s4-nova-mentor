@@ -78,7 +78,7 @@ const OutboundDeliveries: React.FC = () => {
       condition: (row: Delivery) => ['Picked', 'Packed'].includes(row.status),
       onClick: (row: Delivery) => {
         const updated: Delivery = { ...row, status: 'Shipped' };
-        upsertEntity<Delivery>(STORAGE_KEY, updated as Delivery);
+        upsertEntity(STORAGE_KEY, updated as any);
         refresh();
         toast({ title: 'Goods Issue Posted', description: `GI posted for ${row.deliveryNumber}` });
       },
@@ -98,7 +98,7 @@ const OutboundDeliveries: React.FC = () => {
 
   useEffect(() => { if (editing) form.reset(editing); }, [editing]);
 
-  const onSubmit = (values: Delivery) => { upsertEntity<Delivery>(STORAGE_KEY, values); setOpen(false); refresh(); toast({ title: editing ? 'Delivery Updated' : 'Delivery Created', description: values.deliveryNumber }); };
+  const onSubmit = (values: Delivery) => { upsertEntity(STORAGE_KEY, values as any); setOpen(false); refresh(); toast({ title: editing ? 'Delivery Updated' : 'Delivery Created', description: values.deliveryNumber }); };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
