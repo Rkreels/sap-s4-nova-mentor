@@ -2,40 +2,287 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Calendar, Users, Target, FileText, AlertTriangle, Clock } from 'lucide-react';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Textarea } from '../../components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { useToast } from '../../hooks/use-toast';
+import { ArrowLeft, Calendar, Users, Target, FileText, AlertTriangle, Clock, Plus, Edit, Eye, Trash2 } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
-import DataTable from '../../components/data/DataTable';
+import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
+import VoiceTrainingComponent from '../../components/procurement/VoiceTrainingComponent';
+import { listEntities, upsertEntity, removeEntity, generateId } from '../../lib/localCrud';
 
-const projectTemplates = [
-  { id: 'TEMP-001', name: 'Software Development', type: 'IT', duration: '6 months', phases: 5 },
-  { id: 'TEMP-002', name: 'Construction Project', type: 'Infrastructure', duration: '12 months', phases: 8 },
-  { id: 'TEMP-003', name: 'Marketing Campaign', type: 'Marketing', duration: '3 months', phases: 4 },
-  { id: 'TEMP-004', name: 'ERP Implementation', type: 'IT', duration: '9 months', phases: 6 },
-];
+interface ProjectTemplate {
+  id: string;
+  name: string;
+  type: string;
+  duration: string;
+  phases: Phase[];
+  description: string;
+  industry: string;
+  complexity: 'Low' | 'Medium' | 'High';
+}
 
-const projectPlans = [
-  { id: 'PLAN-001', name: 'Q2 Digital Transformation', status: 'Draft', progress: 25, estimatedCost: '€450,000' },
-  { id: 'PLAN-002', name: 'Facility Upgrade Project', status: 'In Review', progress: 60, estimatedCost: '€280,000' },
-  { id: 'PLAN-003', name: 'Product Launch Initiative', status: 'Approved', progress: 100, estimatedCost: '€320,000' },
-];
+interface ProjectPlan {
+  id: string;
+  planId: string;
+  name: string;
+  description: string;
+  status: 'Draft' | 'In Review' | 'Approved' | 'Active' | 'On Hold' | 'Completed' | 'Cancelled';
+  progress: number;
+  estimatedCost: number;
+  actualCost: number;
+  startDate: string;
+  endDate: string;
+  projectManager: string;
+  sponsor: string;
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  phases: Phase[];
+  resources: Resource[];
+  risks: Risk[];
+}
+
+interface Phase {
+  id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  progress: number;
+  status: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold';
+  deliverables: string[];
+  dependencies: string[];
+}
+
+interface Resource {
+  id: string;
+  name: string;
+  role: string;
+  allocation: number;
+  cost: number;
+  availability: string;
+}
+
+interface Risk {
+  id: string;
+  description: string;
+  probability: 'Low' | 'Medium' | 'High';
+  impact: 'Low' | 'Medium' | 'High';
+  mitigation: string;
+  status: 'Open' | 'Mitigated' | 'Closed';
+}
+
 
 const ProjectPlanning: React.FC = () => {
   const navigate = useNavigate();
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
-  const [activeTab, setActiveTab] = useState('planning');
+  const [activeTab, setActiveTab] = useState('plans');
+  const [projectPlans, setProjectPlans] = useState<ProjectPlan[]>([]);
+  const [projectTemplates, setProjectTemplates] = useState<ProjectTemplate[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<ProjectPlan | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isEnabled) {
-      speak('Welcome to Project Planning. Here you can create project plans, define objectives, allocate resources, and set timelines for successful project execution.');
+      speak('Welcome to Project Planning. Create comprehensive project plans with resource allocation, timeline management, and risk assessment for successful project delivery.');
     }
   }, [isEnabled, speak]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = () => {
+    // Load project plans
+    const existingPlans = listEntities<ProjectPlan>('project-plans');
+    if (existingPlans.length === 0) {
+      const samplePlans: ProjectPlan[] = [
+        {
+          id: generateId('plan'),
+          planId: 'PLAN-001',
+          name: 'Digital Transformation Initiative',
+          description: 'Comprehensive digital transformation across all business units',
+          status: 'Active',
+          progress: 35,
+          estimatedCost: 450000,
+          actualCost: 125000,
+          startDate: '2025-01-15',
+          endDate: '2025-12-31',
+          projectManager: 'Sarah Johnson',
+          sponsor: 'CEO Office',
+          priority: 'Critical',
+          phases: [
+            {
+              id: generateId('phase'),
+              name: 'Analysis & Planning',
+              description: 'Current state analysis and future state design',
+              startDate: '2025-01-15',
+              endDate: '2025-03-15',
+              progress: 100,
+              status: 'Completed',
+              deliverables: ['Current State Assessment', 'Future State Design', 'Implementation Roadmap'],
+              dependencies: []
+            },
+            {
+              id: generateId('phase'),
+              name: 'System Implementation',
+              description: 'Core system deployment and integration',
+              startDate: '2025-03-16',
+              endDate: '2025-08-15',
+              progress: 45,
+              status: 'In Progress',
+              deliverables: ['System Configuration', 'Data Migration', 'Integration Testing'],
+              dependencies: ['Analysis & Planning']
+            }
+          ],
+          resources: [
+            {
+              id: generateId('resource'),
+              name: 'Sarah Johnson',
+              role: 'Project Manager',
+              allocation: 100,
+              cost: 85000,
+              availability: 'Full-time'
+            }
+          ],
+          risks: [
+            {
+              id: generateId('risk'),
+              description: 'Resource availability constraints',
+              probability: 'Medium',
+              impact: 'High',
+              mitigation: 'Cross-train team members and maintain backup resources',
+              status: 'Open'
+            }
+          ]
+        }
+      ];
+      
+      samplePlans.forEach(plan => upsertEntity('project-plans', plan as any));
+      setProjectPlans(samplePlans);
+    } else {
+      setProjectPlans(existingPlans);
+    }
+
+    // Load templates
+    const existingTemplates = listEntities<ProjectTemplate>('project-templates');
+    if (existingTemplates.length === 0) {
+      const sampleTemplates: ProjectTemplate[] = [
+        {
+          id: generateId('template'),
+          name: 'Software Development Project',
+          type: 'IT',
+          duration: '6 months',
+          industry: 'Technology',
+          complexity: 'High',
+          description: 'Standard software development project template',
+          phases: [
+            {
+              id: generateId('phase'),
+              name: 'Requirements Gathering',
+              description: 'Collect and document project requirements',
+              startDate: '',
+              endDate: '',
+              progress: 0,
+              status: 'Not Started',
+              deliverables: ['Requirements Document', 'User Stories'],
+              dependencies: []
+            }
+          ]
+        }
+      ];
+      
+      sampleTemplates.forEach(template => upsertEntity('project-templates', template as any));
+      setProjectTemplates(sampleTemplates);
+    } else {
+      setProjectTemplates(existingTemplates);
+    }
+  };
+
+  const handleCreatePlan = () => {
+    setSelectedPlan(null);
+    setIsEditing(false);
+    setIsDialogOpen(true);
+  };
+
+  const handleEditPlan = (plan: ProjectPlan) => {
+    setSelectedPlan(plan);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeletePlan = (planId: string) => {
+    removeEntity('project-plans', planId);
+    setProjectPlans(prev => prev.filter(p => p.id !== planId));
+    toast({
+      title: 'Project Plan Deleted',
+      description: 'Project plan has been successfully deleted.',
+    });
+  };
+
+  const handleSavePlan = (planData: Partial<ProjectPlan>) => {
+    if (isEditing && selectedPlan) {
+      const updatedPlan = { ...selectedPlan, ...planData };
+      upsertEntity('project-plans', updatedPlan as any);
+      setProjectPlans(prev => prev.map(p => p.id === selectedPlan.id ? updatedPlan : p));
+      toast({
+        title: 'Project Plan Updated',
+        description: 'Project plan has been successfully updated.',
+      });
+    } else {
+      const newPlan: ProjectPlan = {
+        id: generateId('plan'),
+        planId: `PLAN-${String(projectPlans.length + 1).padStart(3, '0')}`,
+        phases: [],
+        resources: [],
+        risks: [],
+        progress: 0,
+        actualCost: 0,
+        ...planData as ProjectPlan
+      };
+      upsertEntity('project-plans', newPlan as any);
+      setProjectPlans(prev => [...prev, newPlan]);
+      toast({
+        title: 'Project Plan Created',
+        description: 'New project plan has been successfully created.',
+      });
+    }
+    setIsDialogOpen(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      'Draft': 'bg-gray-100 text-gray-800',
+      'In Review': 'bg-blue-100 text-blue-800',
+      'Approved': 'bg-green-100 text-green-800',
+      'Active': 'bg-emerald-100 text-emerald-800',
+      'On Hold': 'bg-yellow-100 text-yellow-800',
+      'Completed': 'bg-purple-100 text-purple-800',
+      'Cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const colors = {
+      'Low': 'bg-green-100 text-green-800',
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'High': 'bg-orange-100 text-orange-800',
+      'Critical': 'bg-red-100 text-red-800'
+    };
+    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
 
   const templateColumns = [
     { key: 'name', header: 'Template Name' },
@@ -139,11 +386,11 @@ const ProjectPlanning: React.FC = () => {
 
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Current Project Plans</h3>
-            <DataTable 
-              columns={planColumns}
-              data={projectPlans}
-              className="border rounded-md"
-            />
+              <EnhancedDataTable 
+                columns={planColumns}
+                data={projectPlans}
+                searchPlaceholder="Search plans..."
+              />
           </Card>
         </TabsContent>
 
@@ -153,11 +400,11 @@ const ProjectPlanning: React.FC = () => {
               <h3 className="text-lg font-semibold">Project Templates</h3>
               <Button>Create Template</Button>
             </div>
-            <DataTable 
-              columns={templateColumns}
-              data={projectTemplates}
-              className="border rounded-md"
-            />
+              <EnhancedDataTable 
+                columns={templateColumns}
+                data={projectTemplates}
+                searchPlaceholder="Search templates..."
+              />
           </Card>
         </TabsContent>
 
