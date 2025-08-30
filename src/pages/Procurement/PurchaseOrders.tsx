@@ -240,10 +240,20 @@ const PurchaseOrders: React.FC = () => {
       const newPO: PurchaseOrder = {
         id: generateId('po'),
         poNumber,
-        ...data,
+        supplier: data.supplier || '',
+        supplierContact: data.supplierContact || '',
+        orderDate: data.orderDate || new Date().toISOString().split('T')[0],
+        deliveryDate: data.deliveryDate || '',
+        requestedBy: data.requestedBy || '',
+        department: data.department || '',
+        paymentTerms: data.paymentTerms || 'Net 30',
+        deliveryAddress: data.deliveryAddress || '',
+        priority: data.priority || 'Medium',
+        description: data.description,
+        notes: data.notes,
         totalAmount: 0,
         currency: 'USD',
-        status: 'Draft',
+        status: 'Draft' as const,
         items: 0,
       };
 
@@ -302,9 +312,14 @@ const PurchaseOrders: React.FC = () => {
         id: generateId('line'),
         poId: selectedPO.id,
         lineNumber: (poLines.filter(l => l.poId === selectedPO.id).length + 1) * 10,
-        ...data,
+        material: data.material || '',
+        description: data.description || '',
+        quantity: data.quantity || 0,
+        unit: data.unit || 'EA',
+        unitPrice: data.unitPrice || 0,
+        deliveryDate: data.deliveryDate || '',
         totalPrice,
-        status: 'Open',
+        status: 'Open' as const,
         receivedQuantity: 0,
       };
 
@@ -549,7 +564,6 @@ const PurchaseOrders: React.FC = () => {
         }
       },
       variant: 'ghost',
-      className: 'text-red-600 hover:text-red-800',
       condition: (row: PurchaseOrder) => row.status === 'Draft'
     }
   ];

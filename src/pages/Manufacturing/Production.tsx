@@ -242,9 +242,22 @@ const ProductionPage: React.FC = () => {
       const newOrder: ProductionOrder = {
         id: generateId('po'),
         orderNumber,
-        ...data,
+        material: data.material || '',
+        materialDescription: data.materialDescription || '',
+        plannedQuantity: data.plannedQuantity || 0,
+        unit: data.unit || 'EA',
+        startDate: data.startDate || '',
+        endDate: data.endDate || '',
+        costCenter: data.costCenter || '',
+        workCenter: data.workCenter || '',
+        plant: data.plant || '',
+        supervisor: data.supervisor || '',
+        bom: data.bom || '',
+        routing: data.routing || '',
+        priority: data.priority || 'Medium',
+        notes: data.notes,
         confirmedQuantity: 0,
-        status: 'Created',
+        status: 'Created' as const,
         efficiency: 0,
         scrapQuantity: 0,
       };
@@ -296,10 +309,10 @@ const ProductionPage: React.FC = () => {
 
   const confirmProduction = (order: ProductionOrder, quantity: number) => {
     try {
-      const updatedOrder = { 
+      const updatedOrder: ProductionOrder = {
         ...order, 
         confirmedQuantity: order.confirmedQuantity + quantity,
-        status: order.confirmedQuantity + quantity >= order.plannedQuantity ? 'Confirmed' : 'Partially Confirmed'
+        status: (order.confirmedQuantity + quantity >= order.plannedQuantity ? 'Confirmed' : 'Partially Confirmed') as ProductionOrder['status']
       };
       
       upsertEntity(STORAGE_KEY, updatedOrder as any);
