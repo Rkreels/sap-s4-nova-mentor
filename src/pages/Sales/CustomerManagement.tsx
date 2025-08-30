@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../../components/ui/textarea';
 import DataTable from '../../components/data/DataTable';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
+import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 
 interface Customer {
   id: string;
@@ -43,6 +45,8 @@ const CustomerManagement: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { isEnabled } = useVoiceAssistantContext();
+  const { speak } = useVoiceAssistant();
   const { toast } = useToast();
 
   // Sample data
@@ -125,20 +129,31 @@ const CustomerManagement: React.FC = () => {
     setSelectedCustomer(null);
     setIsEditing(false);
     setIsDialogOpen(true);
+    if (isEnabled) {
+      speak('Opening customer creation form. Please fill in the required customer information.');
+    }
   };
 
   const handleEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsEditing(true);
     setIsDialogOpen(true);
+    if (isEnabled) {
+      speak(`Editing customer ${customer.name} from ${customer.company}. You can modify any customer details.`);
+    }
   };
 
   const handleDeleteCustomer = (customerId: string) => {
-    setCustomers(prev => prev.filter(c => c.id !== customerId));
-    toast({
-      title: 'Customer Deleted',
-      description: 'Customer has been successfully removed.',
-    });
+    if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+      setCustomers(prev => prev.filter(c => c.id !== customerId));
+      toast({
+        title: 'Customer Deleted',
+        description: 'Customer has been successfully removed.',
+      });
+      if (isEnabled) {
+        speak('Customer has been successfully deleted from the system.');
+      }
+    }
   };
 
   const handleSaveCustomer = (customerData: Partial<Customer>) => {
@@ -225,11 +240,36 @@ const CustomerManagement: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Customer Management</h1>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv,.xlsx';
+            input.onchange = (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) {
+                toast({ title: 'Import Started', description: `Importing customers from ${file.name}` });
+              }
+            };
+            input.click();
+          }}>
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            const csvData = [
+              ['Customer ID', 'Name', 'Company', 'Email', 'Phone', 'Industry', 'Status', 'Total Revenue'],
+              ...customers.map(c => [c.id, c.name, c.company, c.email, c.phone, c.industry, c.status, c.totalRevenue])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'customers.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast({ title: 'Export Complete', description: 'Customer data exported successfully' });
+          }}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -389,19 +429,72 @@ const CustomerManagement: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex flex-col">
+                <Button variant="outline" className="h-20 flex flex-col" onClick={() => {
+                  toast({ title: 'Generating Report', description: 'Customer Activity Report for last 30 days' });
+                  setTimeout(() => {
+                    const reportData = customers.map(c => `${c.name}: ${Math.floor(Math.random() * 10)} activities`).join('\n');
+                    const blob = new Blob([reportData], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'customer-activity-report.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }, 1000);
+                }}>
                   <span>Customer Activity Report</span>
                   <span className="text-xs text-muted-foreground">Last 30 days</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
+                <Button variant="outline" className="h-20 flex flex-col" onClick={() => {
+                  toast({ title: 'Generating Report', description: 'Revenue Analysis by customer segment' });
+                  setTimeout(() => {
+                    const revenueReport = `High Value: $${customers.filter(c => c.totalRevenue > 1000000).reduce((sum, c) => sum + c.totalRevenue, 0).toLocaleString()}\nMedium Value: $${customers.filter(c => c.totalRevenue >= 100000 && c.totalRevenue <= 1000000).reduce((sum, c) => sum + c.totalRevenue, 0).toLocaleString()}\nLow Value: $${customers.filter(c => c.totalRevenue < 100000).reduce((sum, c) => sum + c.totalRevenue, 0).toLocaleString()}`;
+                    const blob = new Blob([revenueReport], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'revenue-analysis.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }, 1000);
+                }}>
                   <span>Revenue Analysis</span>
                   <span className="text-xs text-muted-foreground">By customer segment</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
+                <Button variant="outline" className="h-20 flex flex-col" onClick={() => {
+                  toast({ title: 'Generating Report', description: 'Credit Analysis report' });
+                  setTimeout(() => {
+                    const creditReport = customers.map(c => `${c.company}: Credit Limit $${c.creditLimit.toLocaleString()}, Utilization: ${Math.floor(Math.random() * 80)}%`).join('\n');
+                    const blob = new Blob([creditReport], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'credit-analysis.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }, 1000);
+                }}>
                   <span>Credit Analysis</span>
                   <span className="text-xs text-muted-foreground">Credit limits &amp; usage</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex flex-col">
+                <Button variant="outline" className="h-20 flex flex-col" onClick={() => {
+                  toast({ title: 'Generating Report', description: 'Sales Performance by representative' });
+                  setTimeout(() => {
+                    const salesReps = [...new Set(customers.map(c => c.salesRep))];
+                    const performanceReport = salesReps.map(rep => {
+                      const repCustomers = customers.filter(c => c.salesRep === rep);
+                      const totalRevenue = repCustomers.reduce((sum, c) => sum + c.totalRevenue, 0);
+                      return `${rep}: ${repCustomers.length} customers, $${totalRevenue.toLocaleString()} revenue`;
+                    }).join('\n');
+                    const blob = new Blob([performanceReport], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sales-performance.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }, 1000);
+                }}>
                   <span>Sales Performance</span>
                   <span className="text-xs text-muted-foreground">By sales representative</span>
                 </Button>

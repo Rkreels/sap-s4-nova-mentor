@@ -149,6 +149,14 @@ const SAPHeader: React.FC<SAPHeaderProps> = ({ onMenuClick }) => {
               <span className="ml-1 text-xs">▼</span>
             </div>
           </Link>
+          
+          <a 
+            href="https://skillsim.vercel.app/dashboard" 
+            target="_self"
+            className="ml-4 px-4 py-2 bg-sap-blue text-white rounded hover:bg-blue-700 transition-colors font-medium"
+          >
+            Master Dashboard
+          </a>
         </div>
         
         <div className="flex items-center space-x-4">
