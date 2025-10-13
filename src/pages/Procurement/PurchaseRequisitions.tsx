@@ -5,16 +5,23 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { ArrowLeft, Plus, Edit, Eye, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Textarea } from '../../components/ui/textarea';
+import { ArrowLeft, Plus, Edit, Eye, FileText, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import PageHeader from '../../components/page/PageHeader';
 import { useVoiceAssistantContext } from '../../context/VoiceAssistantContext';
 import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
 import EnhancedDataTable, { EnhancedColumn, TableAction } from '../../components/data/EnhancedDataTable';
 import { useToast } from '../../hooks/use-toast';
+import { CRUDManager } from '../../lib/crudOperations';
 
 interface PurchaseRequisition {
   id: string;
-  requisitionNumber: string;
+  createdAt: string;
+  updatedAt: string;
   description: string;
   requestor: string;
   department: string;
@@ -28,12 +35,42 @@ interface PurchaseRequisition {
   items: number;
 }
 
+// CRUD Manager
+const requisitionManager = new CRUDManager<PurchaseRequisition>('purchase_requisitions');
+
 const PurchaseRequisitions: React.FC = () => {
   const navigate = useNavigate();
   const { isEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   const [activeTab, setActiveTab] = useState('requisitions');
   const [requisitions, setRequisitions] = useState<PurchaseRequisition[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [editingRequisition, setEditingRequisition] = useState<PurchaseRequisition | null>(null);
+  const [viewingRequisition, setViewingRequisition] = useState<PurchaseRequisition | null>(null);
+  const [formData, setFormData] = useState<{
+    description: string;
+    requestor: string;
+    department: string;
+    totalAmount: string;
+    currency: string;
+    status: 'Draft' | 'Pending' | 'Approved' | 'Rejected' | 'Converted';
+    priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+    requiredDate: string;
+    approver: string;
+    items: number;
+  }>({
+    description: '',
+    requestor: '',
+    department: '',
+    totalAmount: '',
+    currency: 'USD',
+    status: 'Draft',
+    priority: 'Medium',
+    requiredDate: '',
+    approver: '',
+    items: 1
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,41 +79,162 @@ const PurchaseRequisitions: React.FC = () => {
     }
   }, [isEnabled, speak]);
 
+  // Load data
   useEffect(() => {
-    const sampleRequisitions: PurchaseRequisition[] = [
-      {
-        id: 'pr-001',
-        requisitionNumber: 'PR-2025-001',
-        description: 'Office Equipment Request',
-        requestor: 'John Smith',
-        department: 'IT Department',
-        totalAmount: 2500.00,
-        currency: 'USD',
-        status: 'Pending',
-        priority: 'Medium',
-        requestDate: '2025-01-20',
-        requiredDate: '2025-02-15',
-        approver: 'Sarah Wilson',
-        items: 3
-      },
-      {
-        id: 'pr-002',
-        requisitionNumber: 'PR-2025-002',
-        description: 'Marketing Materials',
-        requestor: 'Lisa Chen',
-        department: 'Marketing',
-        totalAmount: 850.00,
-        currency: 'USD',
-        status: 'Approved',
-        priority: 'Low',
-        requestDate: '2025-01-18',
-        requiredDate: '2025-02-01',
-        approver: 'Mike Brown',
-        items: 5
-      }
-    ];
-    setRequisitions(sampleRequisitions);
+    loadRequisitions();
   }, []);
+
+  const loadRequisitions = () => {
+    const data = requisitionManager.getAll();
+    if (data.length === 0) {
+      // Seed initial data
+      const sampleRequisitions = [
+        {
+          description: 'Office Equipment Request',
+          requestor: 'John Smith',
+          department: 'IT Department',
+          totalAmount: 2500.00,
+          currency: 'USD',
+          status: 'Pending' as const,
+          priority: 'Medium' as const,
+          requestDate: '2025-01-20',
+          requiredDate: '2025-02-15',
+          approver: 'Sarah Wilson',
+          items: 3
+        },
+        {
+          description: 'Marketing Materials',
+          requestor: 'Lisa Chen',
+          department: 'Marketing',
+          totalAmount: 850.00,
+          currency: 'USD',
+          status: 'Approved' as const,
+          priority: 'Low' as const,
+          requestDate: '2025-01-18',
+          requiredDate: '2025-02-01',
+          approver: 'Mike Brown',
+          items: 5
+        }
+      ];
+      sampleRequisitions.forEach(item => requisitionManager.create(item));
+      setRequisitions(requisitionManager.getAll());
+    } else {
+      setRequisitions(data);
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingRequisition(null);
+    setFormData({
+      description: '',
+      requestor: '',
+      department: '',
+      totalAmount: '',
+      currency: 'USD',
+      status: 'Draft',
+      priority: 'Medium',
+      requiredDate: '',
+      approver: '',
+      items: 1
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (requisition: PurchaseRequisition) => {
+    setEditingRequisition(requisition);
+    setFormData({
+      description: requisition.description,
+      requestor: requisition.requestor,
+      department: requisition.department,
+      totalAmount: requisition.totalAmount.toString(),
+      currency: requisition.currency,
+      status: requisition.status,
+      priority: requisition.priority,
+      requiredDate: requisition.requiredDate,
+      approver: requisition.approver,
+      items: requisition.items
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleView = (requisition: PurchaseRequisition) => {
+    setViewingRequisition(requisition);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleDelete = (requisition: PurchaseRequisition) => {
+    const reqNumber = `PR-${requisition.id.slice(0, 8).toUpperCase()}`;
+    if (confirm(`Are you sure you want to delete requisition ${reqNumber}?`)) {
+      requisitionManager.delete(requisition.id);
+      loadRequisitions();
+      toast({
+        title: 'Success',
+        description: 'Requisition deleted successfully',
+      });
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!formData.description || !formData.requestor || !formData.department || !formData.totalAmount) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const requisitionData = {
+      description: formData.description,
+      requestor: formData.requestor,
+      department: formData.department,
+      totalAmount: parseFloat(formData.totalAmount),
+      currency: formData.currency,
+      status: formData.status,
+      priority: formData.priority,
+      requestDate: new Date().toISOString().split('T')[0],
+      requiredDate: formData.requiredDate,
+      approver: formData.approver,
+      items: formData.items
+    };
+
+    if (editingRequisition) {
+      requisitionManager.update(editingRequisition.id, requisitionData);
+      toast({
+        title: 'Success',
+        description: 'Requisition updated successfully',
+      });
+    } else {
+      requisitionManager.create(requisitionData);
+      toast({
+        title: 'Success',
+        description: 'Requisition created successfully',
+      });
+    }
+
+    loadRequisitions();
+    setIsDialogOpen(false);
+  };
+
+  const handleApprove = (requisition: PurchaseRequisition) => {
+    const reqNumber = `PR-${requisition.id.slice(0, 8).toUpperCase()}`;
+    requisitionManager.update(requisition.id, { status: 'Approved' });
+    loadRequisitions();
+    toast({
+      title: 'Success',
+      description: `Requisition ${reqNumber} approved`,
+    });
+  };
+
+  const handleReject = (requisition: PurchaseRequisition) => {
+    const reqNumber = `PR-${requisition.id.slice(0, 8).toUpperCase()}`;
+    requisitionManager.update(requisition.id, { status: 'Rejected' });
+    loadRequisitions();
+    toast({
+      title: 'Success',
+      description: `Requisition ${reqNumber} rejected`,
+    });
+  };
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -100,7 +258,13 @@ const PurchaseRequisitions: React.FC = () => {
   };
 
   const columns: EnhancedColumn[] = [
-    { key: 'requisitionNumber', header: 'Requisition #', sortable: true, searchable: true },
+    { 
+      key: 'id', 
+      header: 'Requisition #', 
+      sortable: true, 
+      searchable: true,
+      render: (value: string) => `PR-${value.slice(0, 8).toUpperCase()}`
+    },
     { key: 'description', header: 'Description', searchable: true },
     { key: 'requestor', header: 'Requestor', searchable: true },
     { key: 'department', header: 'Department', filterable: true, filterOptions: [
@@ -154,24 +318,20 @@ const PurchaseRequisitions: React.FC = () => {
   const actions: TableAction[] = [
     {
       label: 'View',
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (row: PurchaseRequisition) => {
-        toast({
-          title: 'View Requisition',
-          description: `Opening ${row.requisitionNumber}`,
-        });
-      },
+      icon: <Eye className="h-4 w-4 mr-2" />,
+      onClick: handleView,
       variant: 'ghost'
     },
     {
       label: 'Edit',
-      icon: <Edit className="h-4 w-4" />,
-      onClick: (row: PurchaseRequisition) => {
-        toast({
-          title: 'Edit Requisition',
-          description: `Editing ${row.requisitionNumber}`,
-        });
-      },
+      icon: <Edit className="h-4 w-4 mr-2" />,
+      onClick: handleEdit,
+      variant: 'ghost'
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 className="h-4 w-4 mr-2" />,
+      onClick: handleDelete,
       variant: 'ghost'
     }
   ];
@@ -243,7 +403,7 @@ const PurchaseRequisitions: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 Purchase Requisitions
-                <Button onClick={() => toast({ title: 'Create Requisition', description: 'Opening new requisition form' })}>
+                <Button onClick={handleCreate}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Requisition
                 </Button>
@@ -273,16 +433,16 @@ const PurchaseRequisitions: React.FC = () => {
                   <div key={requisition.id} className="p-4 border rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-semibold">{requisition.requisitionNumber}</h4>
+                        <h4 className="font-semibold">PR-{requisition.id.slice(0, 8).toUpperCase()}</h4>
                         <p className="text-sm text-muted-foreground">{requisition.description}</p>
                         <p className="text-sm">Requestor: {requisition.requestor} | Amount: ${requisition.totalAmount.toLocaleString()}</p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleApprove(requisition)}>
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Approve
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleReject(requisition)}>
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
                         </Button>
@@ -340,6 +500,221 @@ const PurchaseRequisitions: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingRequisition ? 'Edit Requisition' : 'Create New Requisition'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter requisition description"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="requestor">Requestor *</Label>
+                <Input
+                  id="requestor"
+                  value={formData.requestor}
+                  onChange={(e) => setFormData({ ...formData, requestor: e.target.value })}
+                  placeholder="Enter requestor name"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="department">Department *</Label>
+                <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="IT Department">IT Department</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="totalAmount">Total Amount *</Label>
+                <Input
+                  id="totalAmount"
+                  type="number"
+                  step="0.01"
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="requiredDate">Required Date *</Label>
+                <Input
+                  id="requiredDate"
+                  type="date"
+                  value={formData.requiredDate}
+                  onChange={(e) => setFormData({ ...formData, requiredDate: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="approver">Approver *</Label>
+                <Input
+                  id="approver"
+                  value={formData.approver}
+                  onChange={(e) => setFormData({ ...formData, approver: e.target.value })}
+                  placeholder="Enter approver name"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="items">Number of Items</Label>
+              <Input
+                id="items"
+                type="number"
+                value={formData.items}
+                onChange={(e) => setFormData({ ...formData, items: parseInt(e.target.value) || 1 })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit}>
+              {editingRequisition ? 'Update' : 'Create'} Requisition
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Requisition Details</DialogTitle>
+          </DialogHeader>
+          {viewingRequisition && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Requisition Number</Label>
+                  <p className="font-medium">PR-{viewingRequisition.id.slice(0, 8).toUpperCase()}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <p><Badge className={getStatusColor(viewingRequisition.status)}>{viewingRequisition.status}</Badge></p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Description</Label>
+                <p className="font-medium">{viewingRequisition.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Requestor</Label>
+                  <p className="font-medium">{viewingRequisition.requestor}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Department</Label>
+                  <p className="font-medium">{viewingRequisition.department}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Total Amount</Label>
+                  <p className="font-medium">{viewingRequisition.currency} {viewingRequisition.totalAmount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Priority</Label>
+                  <p><Badge className={getPriorityColor(viewingRequisition.priority)}>{viewingRequisition.priority}</Badge></p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Request Date</Label>
+                  <p className="font-medium">{viewingRequisition.requestDate}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Required Date</Label>
+                  <p className="font-medium">{viewingRequisition.requiredDate}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Approver</Label>
+                  <p className="font-medium">{viewingRequisition.approver}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Number of Items</Label>
+                  <p className="font-medium">{viewingRequisition.items}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+            {viewingRequisition && (
+              <Button onClick={() => {
+                setIsViewDialogOpen(false);
+                handleEdit(viewingRequisition);
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
