@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import SAPSection from '../components/SAPSection';
 import SAPTile from '../components/SAPTile';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from '../components/ui/use-toast';
 import SalesMetrics from './Sales/components/SalesMetrics';
@@ -13,7 +14,7 @@ import CustomersTable from './Sales/components/CustomersTable';
 import InvoicesTable from './Sales/components/InvoicesTable';
 
 const Sales: React.FC = () => {
-  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  const { isEnabled: isVoiceAssistantEnabled } = useVoiceAssistantContext();
   const [salesFilter, setSalesFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('orders');
@@ -22,27 +23,16 @@ const Sales: React.FC = () => {
   const { speak } = useVoiceAssistant();
   
   useEffect(() => {
-    const checkVoiceAssistant = () => {
-      const enabled = localStorage.getItem('voiceAssistantEnabled') === 'true';
-      setIsVoiceAssistantEnabled(enabled);
-      
-      if (enabled) {
-        speak(`Welcome to the Sales module. This is where you manage all aspects of your sales operations. 
-        You can create and track sales orders, manage customer relationships, review sales analytics, and handle billing activities. 
-        For example, you can use the 'Create Sales Order' tile to initiate a new customer order, or view your recent sales in the 
-        'Sales Overview' section. The 'Customer Analytics' feature allows you to understand customer behavior and preferences.`);
-      }
-    };
+    if (isVoiceAssistantEnabled) {
+      speak(`Welcome to the Sales module. This is where you manage all aspects of your sales operations.`);
+    }
     
-    checkVoiceAssistant();
-    
-    // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1200);
     
     return () => clearTimeout(timer);
-  }, [speak]);
+  }, [isVoiceAssistantEnabled, speak]);
 
   // Handle creating a new sales order
   const handleCreateSalesOrder = () => {

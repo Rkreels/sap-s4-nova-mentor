@@ -3,23 +3,17 @@ import React, { useState, useEffect } from 'react';
 import SAPSection from '../components/SAPSection';
 import SAPTile from '../components/SAPTile';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
 const MasterData: React.FC = () => {
-  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  const { isEnabled: isVoiceAssistantEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   
   useEffect(() => {
-    const checkVoiceAssistant = () => {
-      const enabled = localStorage.getItem('voiceAssistantEnabled') === 'true';
-      setIsVoiceAssistantEnabled(enabled);
-      
-      if (enabled) {
-        speak("Welcome to the Master Data module. Here you can manage all master data objects including materials, customers, vendors, and organizational data.");
-      }
-    };
-    
-    checkVoiceAssistant();
-  }, [speak]);
+    if (isVoiceAssistantEnabled) {
+      speak("Welcome to the Master Data module. Here you can manage all master data objects including materials, customers, vendors, and organizational data.");
+    }
+  }, [isVoiceAssistantEnabled, speak]);
 
   return (
     <div>

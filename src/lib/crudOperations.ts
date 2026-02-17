@@ -1,4 +1,4 @@
-// Comprehensive CRUD operations utility with localStorage persistence
+// Comprehensive CRUD operations utility with in-memory persistence
 import { generateId } from './localCrud';
 
 export interface BaseEntity {
@@ -8,6 +8,8 @@ export interface BaseEntity {
   createdBy?: string;
   updatedBy?: string;
 }
+
+const memoryStore = new Map<string, any[]>();
 
 // Generic CRUD operations
 export class CRUDManager<T extends BaseEntity> {
@@ -34,12 +36,7 @@ export class CRUDManager<T extends BaseEntity> {
 
   // Read all
   getAll(): T[] {
-    try {
-      const data = localStorage.getItem(this.storageKey);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+    return (memoryStore.get(this.storageKey) as T[]) || [];
   }
 
   // Read one
@@ -143,12 +140,12 @@ export class CRUDManager<T extends BaseEntity> {
 
   // Private helper
   private save(data: T[]): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(data));
+    memoryStore.set(this.storageKey, data);
   }
 
   // Clear all data
   clear(): void {
-    localStorage.removeItem(this.storageKey);
+    memoryStore.delete(this.storageKey);
   }
 }
 
