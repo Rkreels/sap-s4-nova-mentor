@@ -1,25 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import SAPSection from '../components/SAPSection';
 import SAPTile from '../components/SAPTile';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
 const ProjectManagement: React.FC = () => {
-  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  const { isEnabled: isVoiceAssistantEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   
   useEffect(() => {
-    const checkVoiceAssistant = () => {
-      const enabled = localStorage.getItem('voiceAssistantEnabled') === 'true';
-      setIsVoiceAssistantEnabled(enabled);
-      
-      if (enabled) {
-        speak("Welcome to the Project Management module. Here you can plan, execute, and monitor your projects effectively.");
-      }
-    };
-    
-    checkVoiceAssistant();
-  }, [speak]);
+    if (isVoiceAssistantEnabled) {
+      speak("Welcome to the Project Management module. Here you can plan, execute, and monitor your projects effectively.");
+    }
+  }, [isVoiceAssistantEnabled, speak]);
 
   return (
     <div>

@@ -1,25 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import SAPSection from '../components/SAPSection';
 import SAPTile from '../components/SAPTile';
 import { useVoiceAssistant } from '../hooks/useVoiceAssistant';
+import { useVoiceAssistantContext } from '../context/VoiceAssistantContext';
 
 const BusinessIntelligence: React.FC = () => {
-  const [isVoiceAssistantEnabled, setIsVoiceAssistantEnabled] = useState(false);
+  const { isEnabled: isVoiceAssistantEnabled } = useVoiceAssistantContext();
   const { speak } = useVoiceAssistant();
   
   useEffect(() => {
-    const checkVoiceAssistant = () => {
-      const enabled = localStorage.getItem('voiceAssistantEnabled') === 'true';
-      setIsVoiceAssistantEnabled(enabled);
-      
-      if (enabled) {
-        speak("Welcome to the Business Intelligence module. Here you can access analytics, reporting, and data visualization tools for informed decision making.");
-      }
-    };
-    
-    checkVoiceAssistant();
-  }, [speak]);
+    if (isVoiceAssistantEnabled) {
+      speak("Welcome to the Business Intelligence module. Here you can access analytics, reporting, and data visualization tools for informed decision making.");
+    }
+  }, [isVoiceAssistantEnabled, speak]);
 
   return (
     <div>
